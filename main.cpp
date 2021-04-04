@@ -11,14 +11,14 @@ const int MAZE_HEIGHT = 12;
 
 class PaintWindow : public MainWindow {
 private:
-    QVector<int> directions[4] = { QVector<int>(1.0f, 0.0f), QVector<int>(0.0f, 1.0f), QVector<int>(-1.0f, 0.0f), QVector<int>(0.0f, -1.0f) };
+    QVector2D directions[4] = { QVector2D(1.0f, 0.0f), QVector2D(0.0f, 1.0f), QVector2D(-1.0f, 0.0f), QVector2D(0.0f, -1.0f) };
 public:
     int maze[MAZE_WIDTH][MAZE_HEIGHT] = { {0} };
 
-    bool dfs(QVector<int> position)
+    bool dfs(QVector2D position)
     {
         maze[int(position[0])][int(position[1])] = 2;
-        if (position == QVector<int>(15, 10)) return 1;
+        if (position == QVector2D(15, 10)) return 1;
         for (const auto &dir : directions) {
             auto temp = position + dir;
             if (maze[int(temp[0])][int(temp[1])] == 0) {
