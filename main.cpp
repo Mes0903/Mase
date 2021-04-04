@@ -4,60 +4,74 @@
 #include <QFile>
 #include <QPainter>
 #include <QTextStream>
-#include <QVector2D>
+#include <utility>
+#include <iostream>
+#include <QColor>
 
-const int MAZE_WIDTH = 16;
-const int MAZE_HEIGHT = 12;
+constexpr int MAZE_HEIGHT = 12;
+constexpr int MAZE_WIDTH = 16;
+
+template <typename T1, typename T2>
+std::pair<T1, T2> operator+( const std::pair<T1, T2> &p1, const std::pair<T1, T2> &p2 ) {
+    return std::move( std::make_pair( p1.first + p2.first, p1.second + p2.second ) );
+}
 
 class PaintWindow : public MainWindow {
-private:
-    QVector2D directions[4] = { QVector2D(1.0f, 0.0f), QVector2D(0.0f, 1.0f), QVector2D(-1.0f, 0.0f), QVector2D(0.0f, -1.0f) };
-public:
-    int maze[MAZE_WIDTH][MAZE_HEIGHT] = { {0} };
+  private:
+    const std::pair<int, int> directions[4]{ { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
+  public:
+    int maze[MAZE_HEIGHT][MAZE_WIDTH]{ { 0 } };
 
-    bool dfs(QVector2D position)
-    {
-        maze[int(position[0])][int(position[1])] = 2;
-        if (position == QVector2D(15, 10)) return 1;
-        for (const auto &dir : directions) {
+    bool dfs( std::pair<int, int> position ) {
+
+        maze[position.first][position.second] = 2;
+        if ( position.first == 15 && position.second == 10 )
+            return true;
+        for ( const auto &dir : directions ) {
             auto temp = position + dir;
-            if (maze[int(temp[0])][int(temp[1])] == 0) {
-                if (dfs(temp)) return 1;
+            if (maze[temp.first][temp.second] == 0){
+                if ( dfs( temp ) ) return true;
             }
         }
-        return 0;
+        return false;
     }
 
-    void paintEvent(QPaintEvent*) override
-    {
+    void paintEvent(QPaintEvent*) override {
         const int GRID_SIZE = 50;
-
         QPainter painter(this);
-        for (int y = 0; y < MAZE_HEIGHT; ++y)
-            for (int x = 0; x < MAZE_WIDTH; ++x) {
-                switch (maze[x][y]) {
-                case 1: painter.fillRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE, Qt::red); break;
-                case 2: painter.fillRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE, Qt::green); break;
+        for (int i = 0; i < MAZE_HEIGHT; ++i) {
+            for (int j = 0; j < MAZE_WIDTH; ++j) {
+                switch (maze[i][j]) {
+                    case 1:
+                        painter.fillRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor(qRgb(129,0,0)));
+                        break;
+                    case 2:
+                        painter.fillRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor(qRgb(238,235,221)));
+                        break;
                 }
-
-                painter.drawRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+                painter.drawRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE);
             }
+        }
     }
 };
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     PaintWindow w;
     w.show();
+
     QFile file(QString(SOURCE_PATH) + "/test.txt");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
-    for (int y = 0; y < MAZE_HEIGHT; ++y) {
-        QString string = file.readLine();
-        string = string.simplified().remove(' ');
-        for (int x = 0; x < MAZE_WIDTH; ++x)
-            w.maze[x][y] = string[x].digitValue();
+    QString buff_line{};
+
+    for (int i = 0; i < MAZE_HEIGHT; ++i) {
+        buff_line = file.readLine();
+        buff_line = buff_line.simplified().remove(' ');
+        for (int j = 0; j < MAZE_WIDTH; ++j){
+            w.maze[i][j] = buff_line[j].digitValue();
+        }
     }
+
     w.dfs({0, 1});
     return a.exec();
 }
