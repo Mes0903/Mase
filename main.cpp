@@ -7,6 +7,7 @@
 #include <utility>
 #include <iostream>
 #include <QColor>
+#include <QTimer>
 
 constexpr int MAZE_HEIGHT = 12;
 constexpr int MAZE_WIDTH = 16;
@@ -25,7 +26,7 @@ class PaintWindow : public MainWindow {
     bool dfs( std::pair<int, int> position ) {
 
         maze[position.first][position.second] = 2;
-        if ( position.first == 15 && position.second == 10 )
+        if ( position.first == 10 && position.second == 15 )
             return true;
         for ( const auto &dir : directions ) {
             auto temp = position + dir;
@@ -43,10 +44,10 @@ class PaintWindow : public MainWindow {
             for (int j = 0; j < MAZE_WIDTH; ++j) {
                 switch (maze[i][j]) {
                     case 1:
-                        painter.fillRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor(qRgb(129,0,0)));
+                        painter.fillRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor(qRgb(115,64,70)));
                         break;
                     case 2:
-                        painter.fillRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor(qRgb(238,235,221)));
+                        painter.fillRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor(qRgb(231,158,79)));
                         break;
                 }
                 painter.drawRect(j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE);
@@ -72,6 +73,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    w.dfs({0, 1});
+    w.dfs({1, 0});
     return a.exec();
 }
