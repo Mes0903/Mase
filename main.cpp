@@ -39,29 +39,26 @@ class PaintWindow : public MainWindow {
         return false;
     }
 
-    void bfs(const int first_y, const int first_x){
-        int x{}, y{};
+    void bfs(const int& first_y, const int& first_x){
         std::queue<std::pair<int,int>> result;
         result.push(std::make_pair(first_y,first_x));
         maze[first_y][first_x] = 2;
-        std::pair<int,int> temp;
 
         while(true){
-            temp = result.front();
-            result.pop();
+            const auto& [temp_y, temp_x]{result.front()};
+
             for(const auto &dir : directions){
-                y = temp.first + dir.first;
-                x = temp.second + dir.second;
+                const auto&& [y,x]{ (int[]){temp_y + dir.first, temp_x + dir.second} };
 
                 if( y < MAZE_HEIGHT && x < MAZE_WIDTH) {
                     if(maze[y][x] == 0) {
                         maze[y][x] = 2;
-                        if (y == 10 && x == 15)
-                            return;
+                        if (y == 10 && x == 15) return;
                         result.push(std::make_pair(y, x));
                     }
                 }
             }
+            result.pop();
         }
     }
 
