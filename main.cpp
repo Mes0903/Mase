@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include <QDebug>
+#include <queue>
 #include <QApplication>
 #include <QFile>
 #include <QPainter>
@@ -35,6 +37,36 @@ class PaintWindow : public MainWindow {
             }
         }
         return false;
+    }
+
+    void bfs(const int first_y, const int first_x){
+        bool flag{false}; //判斷找到終點了沒
+        int x{}, y{};
+        std::queue<std::pair<int,int>> result;
+        result.push(std::make_pair(first_y,first_x));
+        maze[first_y][first_x] = 2;
+        std::pair<int,int> temp;
+
+        while(!flag){
+            temp = result.front();
+            result.pop();
+            for(const auto &dir : directions){
+                y = temp.first + dir.first;
+                x = temp.second + dir.second;
+
+                if( y < MAZE_HEIGHT && x < MAZE_WIDTH){
+                    if (y == 10 && x == 15){
+                        maze[y][x] = 2;
+                        flag = true;
+                        break;
+                    }
+                    else if(maze[y][x] == 0){
+                        result.push(std::make_pair(y, x));
+                        maze[y][x] = 2;
+                    }
+                }
+            }
+        }
     }
 
     void paintEvent(QPaintEvent*) override {
@@ -73,6 +105,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    w.dfs({1, 0});
+    //w.dfs({1, 0});
+    w.bfs(1,0);
     return a.exec();
 }
