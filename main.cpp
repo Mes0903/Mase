@@ -10,6 +10,7 @@
 #include <iostream>
 #include <QColor>
 #include <QTimer>
+#include <QComboBox>
 
 constexpr int MAZE_HEIGHT = 12;
 constexpr int MAZE_WIDTH = 16;
@@ -26,7 +27,6 @@ class PaintWindow : public MainWindow {
     int maze[MAZE_HEIGHT][MAZE_WIDTH]{ { 0 } };
 
     bool dfs( std::pair<int, int> position ) {
-
         maze[position.first][position.second] = 2;
         if ( position.first == 10 && position.second == 15 )
             return true;
@@ -62,6 +62,13 @@ class PaintWindow : public MainWindow {
         }
     }
 
+    void reset()
+    {
+        for (int y = 0; y < MAZE_HEIGHT; ++y)
+            for (int x = 0; x < MAZE_WIDTH; ++x)
+                if (maze[y][x] == 2) maze[y][x] = 0;
+    }
+
     void paintEvent(QPaintEvent*) override {
         const int GRID_SIZE = 50;
         QPainter painter(this);
@@ -86,6 +93,18 @@ int main(int argc, char *argv[]) {
     PaintWindow w;
     w.show();
 
+    QComboBox box(&w);
+    box.show();
+    box.addItem("DFS");
+    box.addItem("BFS");
+    QObject::connect(&box, &QComboBox::currentTextChanged, [&w, &box]()
+    {
+        w.reset();
+        if (box.currentText() == "BFS") w.bfs(1, 0);
+        else w.dfs({1, 0});
+        w.repaint();
+    });
+
     QFile file(QString(SOURCE_PATH) + "/test.txt");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString buff_line{};
@@ -98,7 +117,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //w.dfs({1, 0});
-    w.bfs(1,0);
+    w.dfs({1, 0});
+    //w.bfs(1,0);
+
     return a.exec();
 }
