@@ -11,6 +11,8 @@
 #include <QColor>
 #include <QTimer>
 #include <QComboBox>
+#include <QThread>
+#include <QPushButton>
 
 constexpr int MAZE_HEIGHT = 12;
 constexpr int MAZE_WIDTH = 16;
@@ -28,6 +30,8 @@ class PaintWindow : public MainWindow {
 
     bool dfs( std::pair<int, int> position ) {
         maze[position.first][position.second] = 2;
+        repaint();
+        QThread::msleep(50);
         if ( position.first == 10 && position.second == 15 )
             return true;
         for ( const auto &dir : directions ) {
@@ -53,6 +57,8 @@ class PaintWindow : public MainWindow {
                 if( y < MAZE_HEIGHT && x < MAZE_WIDTH) {
                     if(maze[y][x] == 0) {
                         maze[y][x] = 2;
+                        repaint();
+                        QThread::msleep(50);
                         if (y == 10 && x == 15) return;
                         result.push(std::make_pair(y, x));
                     }
@@ -97,12 +103,13 @@ int main(int argc, char *argv[]) {
     box.show();
     box.addItem("DFS");
     box.addItem("BFS");
-    QObject::connect(&box, &QComboBox::currentTextChanged, [&w, &box]()
+
+    QPushButton *runButton = w.findChild<QPushButton*>("runButton");
+    QObject::connect(runButton, &QPushButton::clicked, [&box, &w]()
     {
         w.reset();
         if (box.currentText() == "BFS") w.bfs(1, 0);
         else w.dfs({1, 0});
-        w.repaint();
     });
 
     QFile file(QString(SOURCE_PATH) + "/test.txt");
@@ -116,9 +123,6 @@ int main(int argc, char *argv[]) {
             w.maze[i][j] = buff_line[j].digitValue();
         }
     }
-
-    w.dfs({1, 0});
-    //w.bfs(1,0);
 
     return a.exec();
 }
