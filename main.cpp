@@ -307,13 +307,13 @@ int main( int argc, char *argv[] ) {
     QApplication a( argc, argv );
     PaintWindow w;
     w.show();
-    w.random_prim_make_maze(1,0);
 
     QComboBox box( &w );
     box.show();
     box.addItem( "DFS" );
     box.addItem( "BFS" );
     box.addItem("UCS");
+    box.addItem("Gen");
 
     QPushButton *runButton = w.findChild<QPushButton *>( "runButton" );
     QObject::connect( runButton, &QPushButton::clicked, [&box, &w]() {
@@ -324,6 +324,8 @@ int main( int argc, char *argv[] ) {
             w.ucs( 1, 0 );
         else if ( box.currentText() == "DFS" )
             w.dfs( { 1, 0 } );
+        else
+            w.random_prim_make_maze(1,0);
         w.repaint();
     } );
 
