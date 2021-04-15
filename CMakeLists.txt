@@ -32,6 +32,10 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        making_maze.h
+        making_maze.cpp
+        maze_solving.h
+        maze_solving.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
