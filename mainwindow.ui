@@ -16,28 +16,14 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="runButton">
-    <property name="geometry">
-     <rect>
-      <x>710</x>
-      <y>0</y>
-      <width>91</width>
-      <height>30</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>run</string>
-    </property>
-   </widget>
-  </widget>
+  <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>28</height>
+     <height>20</height>
     </rect>
    </property>
   </widget>

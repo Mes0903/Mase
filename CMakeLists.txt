@@ -36,6 +36,8 @@ set(PROJECT_SOURCES
         making_maze.cpp
         maze_solving.h
         maze_solving.cpp
+        mase.h
+        mase.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

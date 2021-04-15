@@ -29,18 +29,11 @@
 #include <utility>
 #include <vector>
 
+#include "mase.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
-
-inline constexpr int MAZE_HEIGHT = 35;
-inline constexpr int MAZE_WIDTH = 35;
-inline constexpr int END_Y = MAZE_HEIGHT - 2;
-inline constexpr int END_X = MAZE_WIDTH - 1;
-inline constexpr int GRID_SIZE = 25;
-inline constexpr std::pair<int, int> directions[4]{ { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -48,13 +41,12 @@ class MainWindow : public QMainWindow {
   private:
     Ui::MainWindow *ui;
     static MainWindow* w;
+    //Mase* M;
 
     MainWindow(QWidget *parent = nullptr);
     void paintEvent( QPaintEvent * ) override;
 
   public:
-    static inline int maze[MAZE_HEIGHT][MAZE_WIDTH]{ { 0 } };
-
     static MainWindow* getInstance();
     ~MainWindow();
     void reset();

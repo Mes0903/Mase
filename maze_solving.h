@@ -2,24 +2,22 @@
 #define MAZE_SOLVING_H
 
 #include "mainwindow.h"
+#include "mase.h"
 
 
-
-class Maze_Solving : public QObject {
-
-    Q_OBJECT
-
+class Maze_Solving {
   private:
-    static Maze_Solving* solve;
     Maze_Solving();
     ~Maze_Solving();
+    static Maze_Solving* slv;
+    Mase* M;
 
   public:
     static Maze_Solving* getInstance();
-    static inline bool is_in_maze( const int &y, const int &x );
-    bool dfs( std::pair<int, int> position , MainWindow* w);
-    void bfs( const int &first_y, const int &first_x , MainWindow* w);
-    void ucs( const int &first_y, const int &first_x , MainWindow* w);
+    inline bool is_in_maze( const int &y, const int &x );
+    bool dfs( std::pair<int, int> position);
+    void bfs( const int &first_y, const int &first_x);
+    void ucs( const int &first_y, const int &first_x);
 };
 
 #endif // MAZE_SOLVING_H
