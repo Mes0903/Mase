@@ -1,57 +1,44 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QApplication>
-#include <QColor>
-#include <QComboBox>
-#include <QDebug>
-#include <QFile>
-#include <QPainter>
-#include <QPushButton>
-#include <QTextStream>
-#include <QThread>
-#include <QTimer>
-#include <QAction>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QStatusBar>
-#include <QToolBar>
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <queue>
-#include <random>
-#include <stack>
-#include <utility>
-#include <vector>
 
-#include "mase.h"
+#include "making_maze.h"
+#include "maze_solving.h"
+#include "maze.h"
+
+
+#include <QMainWindow>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+class Maze;
+class Making_Maze;
+class Maze_Solving;
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
+  public:
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
+
   private:
     Ui::MainWindow *ui;
-    static MainWindow* w;
-    //Mase* M;
-
-    MainWindow(QWidget *parent = nullptr);
     void paintEvent( QPaintEvent * ) override;
 
-  public:
-    static MainWindow* getInstance();
-    ~MainWindow();
-    void reset();
-
-
+    Maze *M;
+    Making_Maze *mk;
+    Maze_Solving *slv;
+    QAction* DFS;
+    QAction* BFS;
+    QAction* UCS;
+    QAction* GREEDY;
+    QAction* Rm_Prim_Map;
+    QMenu *SLV_Menu;
+    QMenu *MK_Menu;
 };
 
 #endif // MAINWINDOW_H

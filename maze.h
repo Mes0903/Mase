@@ -1,7 +1,9 @@
-#ifndef MASE_H
-#define MASE_H
+#ifndef MAZE_H
+#define MAZE_H
 
-#include "mainwindow.h"
+
+#include <utility>
+
 
 inline constexpr int MAZE_HEIGHT = 35;
 inline constexpr int MAZE_WIDTH = 35;
@@ -11,20 +13,13 @@ inline constexpr int GRID_SIZE = 25;
 inline constexpr std::pair<int, int> directions[4]{ { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
 
-class Mase {
-
-  private:
-    static Mase* M;
-
-  protected:
-    ~Mase();
-    Mase();
+class Maze {
 
   public:
     void reset();
-    static Mase* getInstance();
     static inline int maze[MAZE_HEIGHT][MAZE_WIDTH]{ { 0 } };
-
+    Maze();
+    ~Maze();
 };
 
-#endif // MASE_H
+#endif // MAZE_H

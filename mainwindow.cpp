@@ -1,33 +1,24 @@
 #include "mainwindow.h"
 #include "making_maze.h"
 #include "maze_solving.h"
-#include "mase.h"
+#include "maze.h"
 #include "./ui_mainwindow.h"
 
-MainWindow* MainWindow::w = nullptr;
 
-MainWindow* MainWindow::getInstance(){
-    if(w == nullptr)
-        w = new MainWindow();
+#include <QMainWindow>
+#include <QPainter>
+#include <QAction>
 
-    return w;
-}
 
 void MainWindow::paintEvent( QPaintEvent * )  {
     QPainter painter( this );
-    Mase* M = Mase::getInstance();
     for ( int i = 0; i < MAZE_HEIGHT; ++i ) {
         for ( int j = 0; j < MAZE_WIDTH; ++j ) {
-            QThread::msleep(30);
             switch ( M->maze[i][j] ) {
                 case 1:
-                    this->repaint();
-                    QThread::msleep(30);
                     painter.fillRect( j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor( qRgb( 115, 64, 70 ) ) );
                     break;
                 case 2:
-                    this->repaint();
-                    QThread::msleep(30);
                     painter.fillRect( j * GRID_SIZE, i * GRID_SIZE, GRID_SIZE, GRID_SIZE, QColor( qRgb( 231, 158, 79 ) ) );
                     break;
             }
@@ -36,47 +27,57 @@ void MainWindow::paintEvent( QPaintEvent * )  {
     }
 }
 
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainWindow) {
     ui->setupUi(this);
     this->setWindowTitle("Maze");
     this->resize(QSize(GRID_SIZE*MAZE_WIDTH, GRID_SIZE*MAZE_HEIGHT));
-    Mase *M = Mase::getInstance();
-    Making_Maze *mk = Making_Maze::getInstance();
-    Maze_Solving *slv = Maze_Solving::getInstance();
+
+    M = new Maze();
+    mk = new Making_Maze();
+    slv = new Maze_Solving();
 
     //search
-    QAction* DFS = new QAction(QIcon(("C:/image/ina.gif")), "DFS", this);
+    DFS = new QAction(QIcon(("C:/image/ina.gif")), "DFS", this);
     DFS->setStatusTip(tr("DFS Search"));
-    QObject::connect(DFS, &QAction::triggered, [&M](){M->reset();});
-    QObject::connect(DFS, &QAction::triggered, [&slv](){slv->dfs({1,0});});
+    QObject::connect(DFS, &QAction::triggered, [this](){M->reset();});
+    QObject::connect(DFS, &QAction::triggered, [this](){slv->dfs({1,0}, this );});
     QObject::connect(DFS, &QAction::triggered, [this](){this->repaint();});
 
-    QAction* BFS = new QAction(QIcon(("C:/image/ina.gif")), "BFS", this);
-    DFS->setStatusTip(tr("BFS Search"));
-    QObject::connect(BFS, &QAction::triggered, [&M](){M->reset();});
-    QObject::connect(BFS, &QAction::triggered, [&slv](){slv->bfs(1, 0);});
+    BFS = new QAction(QIcon(("C:/image/ina.gif")), "BFS", this);
+    BFS->setStatusTip(tr("BFS Search"));
+    QObject::connect(BFS, &QAction::triggered, [this](){M->reset();});
+    QObject::connect(BFS, &QAction::triggered, [this](){slv->bfs(1, 0, this );});
     QObject::connect(BFS, &QAction::triggered, [this](){this->repaint();});
 
-    QAction* UCS = new QAction(QIcon(("C:/image/ina.gif")), "UCS", this);
-    DFS->setStatusTip(tr("UCS Search"));
-    QObject::connect(UCS, &QAction::triggered, [&M](){M->reset();});
-    QObject::connect(UCS, &QAction::triggered, [&slv](){slv->ucs( 1, 0);});
+    UCS = new QAction(QIcon(("C:/image/ina.gif")), "UCS", this);
+    UCS->setStatusTip(tr("UCS Search"));
+    QObject::connect(UCS, &QAction::triggered, [this](){M->reset();});
+    QObject::connect(UCS, &QAction::triggered, [this](){slv->ucs( 1, 0, this );});
     QObject::connect(UCS, &QAction::triggered, [this](){this->repaint();});
 
+    GREEDY = new QAction(QIcon(("C:/image/ina.gif")), "GREEDY", this);
+    GREEDY->setStatusTip(tr("UCS Search"));
+    QObject::connect(GREEDY, &QAction::triggered, [this](){M->reset();});
+    QObject::connect(GREEDY, &QAction::triggered, [this](){slv->greedy( 1, 0, this );});
+    QObject::connect(GREEDY, &QAction::triggered, [this](){this->repaint();});
+
     //making map
-    QAction* Rm_Prim_Map = new QAction(QIcon(("C:/image/ina.gif")), "Rm_Prim_Map", this);
+    Rm_Prim_Map = new QAction(QIcon(("C:/image/ina.gif")), "Rm_Prim_Map", this);
     DFS->setStatusTip(tr("Rm_Prim_Map Map Making"));
-    QObject::connect(Rm_Prim_Map, &QAction::triggered, [&M](){M->reset();});
-    QObject::connect(Rm_Prim_Map, &QAction::triggered, [&mk](){mk->random_prim_make_maze(1, 0);});
+    QObject::connect(Rm_Prim_Map, &QAction::triggered, [this](){M->reset();});
+    QObject::connect(Rm_Prim_Map, &QAction::triggered, [this](){mk->random_prim_make_maze( 1, 0, this );});
     QObject::connect(Rm_Prim_Map, &QAction::triggered, [this](){this->repaint();});
 
-    QMenu *SLV_Menu;
+    //Search Menu
     SLV_Menu = this->menuBar()->addMenu("&Searching");
     SLV_Menu->addAction(DFS);
     SLV_Menu->addAction(BFS);
     SLV_Menu->addAction(UCS);
+    SLV_Menu->addAction(GREEDY);
 
-    QMenu *MK_Menu;
+
+    //Making Map Menu
     MK_Menu = this->menuBar()->addMenu("&Map Making");
     MK_Menu->addAction(Rm_Prim_Map);
 
@@ -104,8 +105,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) , ui(new Ui::MainW
 
 MainWindow::~MainWindow() {
     delete ui;
-    delete w;
-    w = nullptr;
 }
 
 
