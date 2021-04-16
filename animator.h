@@ -1,16 +1,17 @@
 #ifndef ANIMATOR_H
 #define ANIMATOR_H
 
+class MainWindow;
 
-#include "mainwindow.h"
-
-
-class Animator : QObject {
-    Q_OBJECT
+class Animator {
 
   public:
-    Animator();
     ~Animator();
+    void update( const int m_sec );
+    Animator(MainWindow *window);
+
+  private:
+    MainWindow *Window;
 };
 
-#endif // ANIMATOR_H
+#endif    // ANIMATOR_H

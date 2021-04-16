@@ -1,50 +1,43 @@
 #include "maze_solving.h"
+#include "animator.h"
 #include "mainwindow.h"
 
 #include <QThread>
-#include <queue>
 #include <math.h>
+#include <queue>
+#include <iostream>
 
-
-Maze_Solving::Maze_Solving() {
+Maze_Solving::Maze_Solving(Animator* A) : Maze(A) {
 }
 
-
-Maze_Solving::~Maze_Solving(){
-
+Maze_Solving::~Maze_Solving() {
 }
 
-
-inline bool Maze_Solving::is_in_maze(const int &y, const int &x) {
+inline bool Maze_Solving::is_in_maze( const int &y, const int &x ) {
     return ( y < MAZE_HEIGHT ) && ( x < MAZE_WIDTH ) && ( y >= 0 ) && ( x >= 0 );
 }
 
-
-inline int Maze_Solving::pow_two_norm(const int& y ,const int& x) {
-    return  pow( (END_Y - y), 2 ) + pow( (END_X - x), 2 ) ;
+inline int Maze_Solving::pow_two_norm( const int &y, const int &x ) {
+    return pow( ( END_Y - y ), 2 ) + pow( ( END_X - x ), 2 );
 }
 
-
-bool Maze_Solving::dfs( std::pair<int, int> position, MainWindow* W){
+bool Maze_Solving::dfs( std::pair<int, int> position ) {
     maze[position.first][position.second] = 2;
-    W->repaint();
-    QThread::msleep(20);
+    animator->update( 20 );
     if ( position.first == END_Y && position.second == END_X )
         return true;
     for ( const auto &[dir_y, dir_x] : directions ) {
-        auto temp = std::make_pair(position.first + dir_y, position.second + dir_x);
+        auto temp = std::make_pair( position.first + dir_y, position.second + dir_x );
         if ( is_in_maze( temp.first, temp.second ) ) {
             if ( maze[temp.first][temp.second] == 0 )
-                if ( Maze_Solving::dfs( temp, W ) )
+                if ( Maze_Solving::dfs( temp ) )
                     return true;
         }
     }
     return false;
-
 }
 
-
-void Maze_Solving::bfs( const int &first_y, const int &first_x, MainWindow* W){
+void Maze_Solving::bfs( const int &first_y, const int &first_x ) {
     std::queue<std::pair<int, int>> result;
     result.push( std::make_pair( first_y, first_x ) );
     maze[first_y][first_x] = 2;
@@ -58,8 +51,7 @@ void Maze_Solving::bfs( const int &first_y, const int &first_x, MainWindow* W){
             if ( is_in_maze( y, x ) ) {
                 if ( maze[y][x] == 0 ) {
                     maze[y][x] = 2;
-                    W->repaint();
-                    QThread::msleep(20);
+                    animator->update( 20 );
                     if ( y == END_Y && x == END_X )
                         return;
                     result.push( std::make_pair( y, x ) );
@@ -70,8 +62,7 @@ void Maze_Solving::bfs( const int &first_y, const int &first_x, MainWindow* W){
     }
 }
 
-
-void Maze_Solving::ucs( const int &first_y, const int &first_x, MainWindow* W) {
+void Maze_Solving::ucs( const int &first_y, const int &first_x ) {
     struct Node {
         int distance;    // 曼哈頓距離
         int y;    // y座標
@@ -82,7 +73,7 @@ void Maze_Solving::ucs( const int &first_y, const int &first_x, MainWindow* W) {
     };
 
     std::priority_queue<Node, std::deque<Node>, std::greater<Node>> result;    //待走的結點
-    result.emplace( Node( pow_two_norm(first_y, first_x), 1, 0 ) );
+    result.emplace( Node( pow_two_norm( first_y, first_x ), 1, 0 ) );
 
     while ( true ) {
         if ( result.empty() )
@@ -92,28 +83,25 @@ void Maze_Solving::ucs( const int &first_y, const int &first_x, MainWindow* W) {
 
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = 2;    //探索過的點要改2
-            W->repaint();
-            QThread::msleep(20);
+            animator->update( 20 );
             return;    //如果取出的是目標就return
         }
         else if ( maze[temp.y][temp.x] == 0 ) {
             maze[temp.y][temp.x] = 2;    //探索過的點要改2
-            W->repaint();
-            QThread::msleep(20);
+            animator->update( 20 );
             for ( const auto &dir : directions ) {
                 const auto &&[y, x]{ ( int[] ){ temp.y + dir.first, temp.x + dir.second } };
 
                 if ( is_in_maze( y, x ) ) {
                     if ( maze[y][x] == 0 )    // 如果這個結點還沒走過，就把他加到待走的結點裡
-                        result.emplace( Node( temp.distance + pow_two_norm(y, x), y, x ) );
+                        result.emplace( Node( temp.distance + pow_two_norm( y, x ), y, x ) );
                 }
             }
         }
     }
 }
 
-
-void Maze_Solving::greedy( const int &first_y, const int &first_x, MainWindow* W) {
+void Maze_Solving::greedy( const int &first_y, const int &first_x ) {
     struct Node {
         int distance;    // 曼哈頓距離
         int y;    // y座標
@@ -124,7 +112,7 @@ void Maze_Solving::greedy( const int &first_y, const int &first_x, MainWindow* W
     };
 
     std::priority_queue<Node, std::deque<Node>, std::greater<Node>> result;    //待走的結點
-    result.emplace( Node( pow_two_norm(first_y, first_x), 1, 0 ) );
+    result.emplace( Node( pow_two_norm( first_y, first_x ), 1, 0 ) );
 
     while ( true ) {
         if ( result.empty() )
@@ -134,20 +122,18 @@ void Maze_Solving::greedy( const int &first_y, const int &first_x, MainWindow* W
 
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = 2;    //探索過的點要改2
-            W->repaint();
-            QThread::msleep(20);
+            animator->update( 20 );
             return;    //如果取出的是目標就return
         }
         else if ( maze[temp.y][temp.x] == 0 ) {
             maze[temp.y][temp.x] = 2;    //探索過的點要改2
-            W->repaint();
-            QThread::msleep(20);
+            animator->update( 20 );
             for ( const auto &dir : directions ) {
                 const auto &&[y, x]{ ( int[] ){ temp.y + dir.first, temp.x + dir.second } };
 
                 if ( is_in_maze( y, x ) ) {
                     if ( maze[y][x] == 0 )    // 如果這個結點還沒走過，就把他加到待走的結點裡
-                        result.emplace( Node( pow_two_norm(y, x), y, x ) );
+                        result.emplace( Node( pow_two_norm( y, x ), y, x ) );
                 }
             }
         }

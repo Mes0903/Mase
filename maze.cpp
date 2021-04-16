@@ -1,15 +1,13 @@
 #include "maze.h"
+#include "animator.h"
+#include "mainwindow.h"
+#include <iostream>
 
-
-Maze::Maze() {
-
+Maze::Maze(Animator* A) : animator(A){
 }
 
-
-Maze::~Maze(){
-
+Maze::~Maze() {
 }
-
 
 void Maze::reset() {
     for ( int y = 0; y < MAZE_HEIGHT; ++y )

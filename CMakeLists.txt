@@ -29,8 +29,10 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
         main.cpp
-        mainwindow.cpp
         mainwindow.h
+        mainwindow.cpp
+        animator.h
+        animator.cpp
         mainwindow.ui
         making_maze.h
         making_maze.cpp
@@ -38,8 +40,6 @@ set(PROJECT_SOURCES
         maze_solving.cpp
         maze.h
         maze.cpp
-        animator.h
-        animator.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
