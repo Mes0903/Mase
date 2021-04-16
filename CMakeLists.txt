@@ -34,8 +34,8 @@ set(PROJECT_SOURCES
         animator.h
         animator.cpp
         mainwindow.ui
-        making_maze.h
-        making_maze.cpp
+        maze_making.h
+        maze_making.cpp
         maze_solving.h
         maze_solving.cpp
         maze.h

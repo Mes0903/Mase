@@ -11,7 +11,7 @@ class MainWindow;
 QT_END_NAMESPACE
 
 class Maze;
-class Making_Maze;
+class Maze_Making;
 class Maze_Solving;
 class Animator;
 
@@ -19,28 +19,34 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
   public:
-    static MainWindow *getInstance();
+    MainWindow( QWidget *parent = nullptr );
     ~MainWindow();
     friend Animator;
 
   private:
-    MainWindow( QWidget *parent = nullptr );
     Ui::MainWindow *ui;
     static MainWindow *W;
 
     void paintEvent( QPaintEvent * ) override;
 
     Maze *M;
-    Making_Maze *mk;
+    Maze_Making *mk;
     Maze_Solving *slv;
     Animator *animator;
+
+    QMenu *SLV_Menu;
     QAction *DFS;
     QAction *BFS;
-    QAction *UCS;
+    QAction *Manhattan_Distance_UCS;
+    QAction *Two_Norm_UCS;
+    QAction *Interval_UCS;
     QAction *GREEDY;
-    QAction *Rm_Prim_Map;
-    QMenu *SLV_Menu;
+    QAction *A_STAR;
+
     QMenu *MK_Menu;
+    QAction *Empty_Map;
+    QAction *Rm_Prim_Map;
+
 };
 
 #endif    // MAINWINDOW_H

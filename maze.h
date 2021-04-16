@@ -22,6 +22,13 @@ class Maze {
     Animator* animator;
 
   protected:
+    enum class Maze_Elements : int {
+        GROUND = 0,
+        WALL = 1,
+        EXPLORED = 2,
+        BEGIN = 9,
+        END = 10,
+    };
 };
 
 #endif    // MAZE_H
