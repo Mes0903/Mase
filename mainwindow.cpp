@@ -1,13 +1,14 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "maze_making.h"
-#include "maze.h"
-#include "maze_solving.h"
 #include "animator.h"
+#include "maze.h"
+#include "maze_making.h"
+#include "maze_solving.h"
 
 #include <QAction>
 #include <QMainWindow>
 #include <QPainter>
+
 #include <iostream>
 
 void MainWindow::paintEvent( QPaintEvent * ) {
@@ -34,17 +35,17 @@ void MainWindow::paintEvent( QPaintEvent * ) {
             painter.drawRect( x * GRID_SIZE, y * GRID_SIZE + 22.5, GRID_SIZE, GRID_SIZE );
         }
     }
-} // MainWindow::paintEvent
+}    // MainWindow::paintEvent
 
 MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ) {
     ui->setupUi( this );
     this->setWindowTitle( "Maze" );
     this->resize( QSize( GRID_SIZE * MAZE_WIDTH, GRID_SIZE * MAZE_HEIGHT + 40 ) );
 
-    animator = new Animator(this);
-    M = new Maze(animator);
-    mk = new Maze_Making(animator);
-    slv = new Maze_Solving(animator);
+    animator = new Animator( this );
+    M = new Maze( animator );
+    mk = new Maze_Making( animator );
+    slv = new Maze_Solving( animator );
 
     //search
     DFS = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "DFS", this );
@@ -77,10 +78,15 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     QObject::connect( GREEDY, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( GREEDY, &QAction::triggered, [this]() { slv->greedy( 1, 0 ); } );
 
-    A_STAR = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "A_STAR", this );
-    A_STAR->setStatusTip( "A_STAR Search" );
-    QObject::connect( A_STAR, &QAction::triggered, [this]() { M->reset(); } );
-    QObject::connect( A_STAR, &QAction::triggered, [this]() { slv->a_star( 1, 0 ); } );
+    Normal_A_STAR = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Normal_A_STAR", this );
+    Normal_A_STAR->setStatusTip( "A_STAR Search with constant cost function 50 and heuristic function Manhattan_Distance" );
+    QObject::connect( Normal_A_STAR, &QAction::triggered, [this]() { M->reset(); } );
+    QObject::connect( Normal_A_STAR, &QAction::triggered, [this]() { slv->a_star( 1, 0, 0 ); } );
+
+    Interval_A_STAR = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Interval_A_STAR", this );
+    Interval_A_STAR->setStatusTip( "A_STAR Search with cost function Interval and heuristic function two_norm square" );
+    QObject::connect( Interval_A_STAR, &QAction::triggered, [this]() { M->reset(); } );
+    QObject::connect( Interval_A_STAR, &QAction::triggered, [this]() { slv->a_star( 1, 0, 1 ); } );
 
     //making map
     Empty_Map = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Empty_Map", this );
@@ -93,7 +99,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     QObject::connect( Rm_Prim_Map, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Rm_Prim_Map, &QAction::triggered, [this]() { mk->random_prim_make_maze( 1, 0 ); } );
 
-
     //Search Menu
     SLV_Menu = this->menuBar()->addMenu( "&Searching" );
     SLV_Menu->addAction( DFS );
@@ -102,13 +107,14 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     SLV_Menu->addAction( Two_Norm_UCS );
     SLV_Menu->addAction( Interval_UCS );
     SLV_Menu->addAction( GREEDY );
-    SLV_Menu->addAction( A_STAR );
+    SLV_Menu->addAction( Normal_A_STAR );
+    SLV_Menu->addAction( Interval_A_STAR );
 
     //Making Map Menu
     MK_Menu = this->menuBar()->addMenu( "&Map Making" );
     MK_Menu->addAction( Empty_Map );
     MK_Menu->addAction( Rm_Prim_Map );
-} //end MainWindow::MainWindow
+}    //end MainWindow::MainWindow
 
 MainWindow::~MainWindow() {
     delete ui;

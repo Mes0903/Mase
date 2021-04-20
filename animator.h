@@ -8,7 +8,7 @@ class Animator {
   public:
     ~Animator();
     void update( const int m_sec );
-    Animator(MainWindow *window);
+    Animator( MainWindow *window );
 
   private:
     MainWindow *Window;

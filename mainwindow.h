@@ -41,12 +41,12 @@ class MainWindow : public QMainWindow {
     QAction *Two_Norm_UCS;
     QAction *Interval_UCS;
     QAction *GREEDY;
-    QAction *A_STAR;
+    QAction *Normal_A_STAR;
+    QAction *Interval_A_STAR;
 
     QMenu *MK_Menu;
     QAction *Empty_Map;
     QAction *Rm_Prim_Map;
-
 };
 
 #endif    // MAINWINDOW_H

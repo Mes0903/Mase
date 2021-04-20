@@ -1,12 +1,11 @@
 #include "animator.h"
 #include "mainwindow.h"
 
-#include <iostream>
 #include <QPainter>
 #include <QThread>
+#include <iostream>
 
-
-Animator::Animator(MainWindow* __Window) : Window(__Window) {
+Animator::Animator( MainWindow *__Window ) : Window( __Window ) {
 }
 
 Animator::~Animator() {
