@@ -47,6 +47,7 @@ class MainWindow : public QMainWindow {
     QMenu *MK_Menu;
     QAction *Empty_Map;
     QAction *Rm_Prim_Map;
+    QAction *Recursive_Map;
 };
 
 #endif    // MAINWINDOW_H

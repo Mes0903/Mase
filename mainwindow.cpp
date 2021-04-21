@@ -32,6 +32,7 @@ void MainWindow::paintEvent( QPaintEvent * ) {
                     painter.fillRect( x * GRID_SIZE, y * GRID_SIZE + 22.5, GRID_SIZE, GRID_SIZE, QColor( qRgb( 250, 50, 150 ) ) );
                     break;
             }
+            //painter.fillRect( M->ON_X * GRID_SIZE, M->ON_Y * GRID_SIZE + 22.5, GRID_SIZE, GRID_SIZE, QColor( qRgb( 50, 215, 250 ) ) );
             painter.drawRect( x * GRID_SIZE, y * GRID_SIZE + 22.5, GRID_SIZE, GRID_SIZE );
         }
     }
@@ -99,6 +100,11 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     QObject::connect( Rm_Prim_Map, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Rm_Prim_Map, &QAction::triggered, [this]() { mk->random_prim_make_maze( 1, 0 ); } );
 
+    Recursive_Map = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Recursive_Map", this );
+    Recursive_Map->setStatusTip( "Recursive backtracker Algorithm Map Making" );
+    QObject::connect( Recursive_Map, &QAction::triggered, [this]() { M->reset(); } );
+    QObject::connect( Recursive_Map, &QAction::triggered, [this]() { mk->recursion_make_maze( 1, 0 ); } );
+
     //Search Menu
     SLV_Menu = this->menuBar()->addMenu( "&Searching" );
     SLV_Menu->addAction( DFS );
@@ -114,6 +120,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     MK_Menu = this->menuBar()->addMenu( "&Map Making" );
     MK_Menu->addAction( Empty_Map );
     MK_Menu->addAction( Rm_Prim_Map );
+    MK_Menu->addAction( Recursive_Map );
 }    //end MainWindow::MainWindow
 
 MainWindow::~MainWindow() {

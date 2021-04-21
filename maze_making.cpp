@@ -4,8 +4,11 @@
 #include "maze.h"
 
 #include <QThread>
+#include <algorithm>
 #include <deque>
+#include <stack>
 #include <iostream>
+#include <random>
 
 Maze_Making::Maze_Making( Animator *A ) : Maze( A ) {
 }
@@ -23,11 +26,9 @@ void Maze_Making::empty_map() {
             maze[y][x] = static_cast<int>( Maze_Elements::GROUND );
     }
     animator->update( 0 );
-}
+} // end empty_map()
 
-void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x ) {
-    std::deque<std::pair<int, int>> re_load;    //之後要改回道路的座標清單
-
+inline void Maze_Making::initializing_maze(){
     //地圖初始化
     for ( int y = 0; y < MAZE_HEIGHT; ++y ) {
         for ( int x = 0; x < MAZE_WIDTH; ++x ) {
@@ -43,19 +44,28 @@ void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x 
             //animator->update( 2 );    //更新畫面
         }
     }
+} //end initializing_maze()
 
+inline void Maze_Making::set_begin_point(int& seed_y, int& seed_x, std::deque<std::pair<int ,int>>& re_load) {
     std::srand( std::chrono::system_clock::now().time_since_epoch().count() );    //設定隨機數種子
-    int seed_y, seed_x;    //一開始 x,y 座標
     while ( true ) {
         seed_y = ( rand() % ( MAZE_HEIGHT - 2 ) ) + 1;
         seed_x = ( rand() % ( MAZE_WIDTH - 2 ) ) + 1;
-        if ( seed_x % 2 == static_cast<int>( Maze_Elements::WALL ) && seed_y % 2 == static_cast<int>( Maze_Elements::WALL ) ) {
+        if ( seed_x % 2 == 1 && seed_y % 2 == 1 ) {
             maze[seed_y][seed_x] = static_cast<int>( Maze_Elements::EXPLORED );    // 隨機挑一點當作生成的起點
             re_load.emplace_back( std::make_pair( seed_y, seed_x ) );    //加進之後要改回道路的清單裡
             break;
         }
     }
+} //end set_begin_point
 
+
+void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x ) {
+    initializing_maze();
+
+    int seed_y{}, seed_x{};
+    std::deque<std::pair<int, int>> re_load;    //之後要改回道路的座標清單
+    set_begin_point(seed_y, seed_x, re_load);
     std::deque<std::pair<int, int>> wall;    //待找的牆的列表
     for ( const auto &[dir_y, dir_x] : directions ) {
         if ( if_in_wall( seed_y, seed_x, dir_y, dir_x ) )
@@ -154,3 +164,69 @@ void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x 
     maze[END_Y][END_X] = static_cast<int>( Maze_Elements::GROUND );    //出口
     animator->update( 2 );
 }    // end random_prim_make_maze
+
+
+void Maze_Making::recursion_make_maze(const int &first_y, const int &first_x){
+    initializing_maze();
+
+    std::deque<std::pair<int, int>> re_load;    //之後要改回道路的座標清單
+    int seed_y{}, seed_x{};    //一開始 x,y 座標
+    set_begin_point(seed_y, seed_x, re_load);
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::srand( std::chrono::system_clock::now().time_since_epoch().count() );    //設定隨機數種子
+
+    struct Node {
+        int y, x, current_index;
+        std::vector<int> walking_order{0,1,2,3};
+        Node(int __y, int __x, int __current_index) : y(__y), x(__x), current_index(__current_index){
+            std::random_shuffle(walking_order.begin(), walking_order.end());
+        };
+    };
+    std::stack<Node> Walking_List;
+    Node first_node(seed_y, seed_x, 0);
+    //std::shuffle(std::begin(first_node.walking_order), std::end(first_node.walking_order), g);
+    Walking_List.emplace(first_node);
+
+    while(!Walking_List.empty()) {
+        Node temp = Walking_List.top();
+        int &Index = Walking_List.top().walking_order[Walking_List.top().current_index];
+        const auto [dir_y, dir_x] = directions[Index];
+        if( if_in_wall( temp.y, temp.x, 2*dir_y, 2*dir_x ) ) {
+            if(maze[temp.y + 2*dir_y][temp.x + 2*dir_x] == static_cast<int>(Maze_Elements::GROUND)) {
+                ++Walking_List.top().current_index;
+                if(Walking_List.top().current_index > 3)
+                    Walking_List.pop();
+                //std::shuffle(std::begin(Walking_List.top().walking_order), std::end(Walking_List.top().walking_order), g);
+                Walking_List.emplace(Node(temp.y+2*dir_y, temp.x+2*dir_x, 0));
+                maze[temp.y + dir_y][temp.x + dir_x] = static_cast<int>(Maze_Elements::EXPLORED);
+                re_load.emplace_back(std::make_pair(temp.y + dir_y, temp.x + dir_x));
+                maze[temp.y + 2*dir_y][temp.x + 2*dir_x] = static_cast<int>(Maze_Elements::EXPLORED);
+                re_load.emplace_back(std::make_pair(temp.y + 2*dir_y, temp.x + 2*dir_x));
+                animator->update(2);
+            }
+            else {
+                ++Walking_List.top().current_index;
+
+                if(Walking_List.top().current_index > 3)
+                    Walking_List.pop();
+            }
+        }
+        else {
+            ++Walking_List.top().current_index;
+
+            if(Walking_List.top().current_index > 3)
+                Walking_List.pop();
+        }
+    }
+
+    for ( const auto &[temp_y, temp_x] : re_load ) {    //把剛剛探索過的點換成 GROUND ，因為我們在生成地圖
+        maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::GROUND );
+        //animator->update( 2 );
+    }
+    animator->update( 10 );
+
+    maze[first_y][first_x] = static_cast<int>( Maze_Elements::GROUND );    //入口
+    maze[END_Y][END_X] = static_cast<int>( Maze_Elements::GROUND );    //出口
+    animator->update( 2 );
+}    //end recursion_make_maze

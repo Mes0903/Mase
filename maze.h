@@ -9,6 +9,7 @@ inline constexpr int END_Y = MAZE_HEIGHT - 2;
 inline constexpr int END_X = MAZE_WIDTH - 1;
 inline constexpr int GRID_SIZE = 25;
 inline constexpr std::pair<int, int> directions[4]{ { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
+inline constexpr std::pair<int, int> GROUND_Direction[4]{ { 2, 0 }, { 0, 2 }, { -2, 0 }, { 0, -2 } };
 
 class Animator;
 
