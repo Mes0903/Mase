@@ -3,8 +3,8 @@
 
 #include <utility>
 
-inline constexpr int MAZE_HEIGHT = 37;
-inline constexpr int MAZE_WIDTH = 37;
+inline constexpr int MAZE_HEIGHT = 39;
+inline constexpr int MAZE_WIDTH = 75;
 inline constexpr int BEGIN_Y = 1;
 inline constexpr int BEGIN_X = 0;
 inline constexpr int END_Y = MAZE_HEIGHT - 2;

@@ -40,7 +40,7 @@ class MainWindow : public QMainWindow {
     QAction *DFS;
     QAction *BFS;
     QAction *Manhattan_Distance_UCS;
-    QAction *Two_Norm_UCS;
+    QAction *Pow_Two_Norm_UCS;
     QAction *Interval_UCS;
     QAction *GREEDY;
     QAction *Normal_A_STAR;

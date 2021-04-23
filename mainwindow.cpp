@@ -32,7 +32,7 @@ void MainWindow::paintEvent( QPaintEvent * ) {
                     painter.fillRect( x * GRID_SIZE, y * GRID_SIZE + 22.5, GRID_SIZE, GRID_SIZE, QColor( qRgb( 250, 50, 150 ) ) );
                     break;
             }
-            painter.fillRect( M->Buffer_Node.second * GRID_SIZE + 1, M->Buffer_Node.first * GRID_SIZE + 23.5, GRID_SIZE - 1, GRID_SIZE, QColor( qRgb( 50, 215, 250 ) ) );
+            painter.fillRect( M->Buffer_Node.second * GRID_SIZE + 1, M->Buffer_Node.first * GRID_SIZE + 22.5 + 1, GRID_SIZE - 1, GRID_SIZE - 1, QColor( qRgb( 50, 215, 250 ) ) );
             painter.drawRect( x * GRID_SIZE, y * GRID_SIZE + 22.5, GRID_SIZE, GRID_SIZE );
         }
     }
@@ -40,7 +40,7 @@ void MainWindow::paintEvent( QPaintEvent * ) {
 
 MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow ) {
     ui->setupUi( this );
-    this->setWindowTitle( "Maze" );
+    this->setWindowTitle( "Mase" );
     this->resize( QSize( GRID_SIZE * MAZE_WIDTH, GRID_SIZE * MAZE_HEIGHT + 40 ) );
 
     animator = new Animator( this );
@@ -60,17 +60,17 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     QObject::connect( BFS, &QAction::triggered, [this]() { slv->bfs(); } );
 
     Manhattan_Distance_UCS = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Manhattan_Distance_UCS", this );
-    Manhattan_Distance_UCS->setStatusTip( "UCS With Manhattan_Distance Cost Function" );
+    Manhattan_Distance_UCS->setStatusTip( "UCS with Manhattan Distance cost function." );
     QObject::connect( Manhattan_Distance_UCS, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Manhattan_Distance_UCS, &QAction::triggered, [this]() { slv->ucs( 0 ); } );
 
-    Two_Norm_UCS = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Two_Norm_UCS", this );
-    Two_Norm_UCS->setStatusTip( "UCS With Two_Norm Cost Function" );
-    QObject::connect( Two_Norm_UCS, &QAction::triggered, [this]() { M->reset(); } );
-    QObject::connect( Two_Norm_UCS, &QAction::triggered, [this]() { slv->ucs( 1 ); } );
+    Pow_Two_Norm_UCS = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Pow_Two_Norm_UCS", this );
+    Pow_Two_Norm_UCS->setStatusTip( "UCS with Two Norm of second power cost function." );
+    QObject::connect( Pow_Two_Norm_UCS, &QAction::triggered, [this]() { M->reset(); } );
+    QObject::connect( Pow_Two_Norm_UCS, &QAction::triggered, [this]() { slv->ucs( 1 ); } );
 
     Interval_UCS = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Interval_UCS", this );
-    Interval_UCS->setStatusTip( "UCS With Interval Cost Function" );
+    Interval_UCS->setStatusTip( "UCS with Interval cost function." );
     QObject::connect( Interval_UCS, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Interval_UCS, &QAction::triggered, [this]() { slv->ucs( 2 ); } );
 
@@ -80,12 +80,12 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     QObject::connect( GREEDY, &QAction::triggered, [this]() { slv->greedy(); } );
 
     Normal_A_STAR = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Normal_A_STAR", this );
-    Normal_A_STAR->setStatusTip( "A_STAR Search with constant cost function 50 and heuristic function Manhattan_Distance" );
+    Normal_A_STAR->setStatusTip( "A* with constant cost function 50 and heuristic function Manhattan Distance." );
     QObject::connect( Normal_A_STAR, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Normal_A_STAR, &QAction::triggered, [this]() { slv->a_star( 0 ); } );
 
     Interval_A_STAR = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Interval_A_STAR", this );
-    Interval_A_STAR->setStatusTip( "A_STAR Search with cost function Interval and heuristic function two_norm square" );
+    Interval_A_STAR->setStatusTip( "A* with Interval cost function and Two Norm of second power heuristic function." );
     QObject::connect( Interval_A_STAR, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Interval_A_STAR, &QAction::triggered, [this]() { slv->a_star( 1 ); } );
 
@@ -97,25 +97,25 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     QObject::connect( Empty_Map, &QAction::triggered, [this]() { mk->set_Flag(); } );
 
     Rm_Prim_Map = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Random_Prim_Making", this );
-    Rm_Prim_Map->setStatusTip( "Random_Prim Algorithm Map Making" );
+    Rm_Prim_Map->setStatusTip( "Random Prim Algorithm Map Making." );
     QObject::connect( Rm_Prim_Map, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Rm_Prim_Map, &QAction::triggered, [this]() { mk->random_prim_make_maze( 0 ); } );
     QObject::connect( Rm_Prim_Map, &QAction::triggered, [this]() { mk->set_Flag(); } );
 
     Multi_Rm_Prim_Map = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Multi_Random_Prim_Making", this );
-    Multi_Rm_Prim_Map->setStatusTip( "Random_Prim Algorithm Map Making with random break wall" );
+    Multi_Rm_Prim_Map->setStatusTip( "Random Prim Algorithm Map Making with randomly breaking some wall." );
     QObject::connect( Multi_Rm_Prim_Map, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Multi_Rm_Prim_Map, &QAction::triggered, [this]() { mk->random_prim_make_maze( 1 ); } );
     QObject::connect( Multi_Rm_Prim_Map, &QAction::triggered, [this]() { mk->set_Flag(); } );
 
     Recursive_Map = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Recursive_Map", this );
-    Recursive_Map->setStatusTip( "Recursive Backtracker Algorithm Map Making" );
+    Recursive_Map->setStatusTip( "Recursive Backtracker Algorithm Map Making." );
     QObject::connect( Recursive_Map, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Recursive_Map, &QAction::triggered, [this]() { mk->recursion_make_maze(); } );
     QObject::connect( Recursive_Map, &QAction::triggered, [this]() { mk->set_Flag(); } );
 
     Recur_div_Map = new QAction( QIcon( ( "C:/image/ina.gif" ) ), "Recur_div_Map", this );
-    Recur_div_Map->setStatusTip( "Recursive Division Algorithm Map Making" );
+    Recur_div_Map->setStatusTip( "Recursive Division Algorithm Map Making." );
     QObject::connect( Recur_div_Map, &QAction::triggered, [this]() { M->reset(); } );
     QObject::connect( Recur_div_Map, &QAction::triggered, [this]() { M->reset_wall_around_maze(); } );
     QObject::connect( Recur_div_Map, &QAction::triggered, [this]() { mk->recursive_division( 1, 1, MAZE_HEIGHT - 2, MAZE_WIDTH - 2 ); } );
@@ -126,7 +126,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     SLV_Menu->addAction( DFS );
     SLV_Menu->addAction( BFS );
     SLV_Menu->addAction( Manhattan_Distance_UCS );
-    SLV_Menu->addAction( Two_Norm_UCS );
+    SLV_Menu->addAction( Pow_Two_Norm_UCS );
     SLV_Menu->addAction( Interval_UCS );
     SLV_Menu->addAction( GREEDY );
     SLV_Menu->addAction( Normal_A_STAR );

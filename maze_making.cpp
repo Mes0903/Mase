@@ -21,7 +21,7 @@ void Maze_Making::set_Flag() {
     maze[BEGIN_Y][BEGIN_X] = static_cast<int>(Maze_Elements::BEGIN);
     maze[END_Y][END_X] = static_cast<int>(Maze_Elements::END);
     Buffer_Node.first = -1, Buffer_Node.second = -1;
-    animator->update(2);
+    animator->update( 1 );
 }
 
 inline bool Maze_Making::if_in_wall( const int &y, const int &x, const int &delta_y, const int &delta_x ) {
@@ -33,7 +33,7 @@ void Maze_Making::empty_map() {
         for ( int x = 0; x < MAZE_WIDTH; ++x )
             maze[y][x] = static_cast<int>( Maze_Elements::GROUND );
     }
-    animator->update( 0 );
+    animator->update( 1 );
 } // end empty_map()
 
 inline void Maze_Making::initializing_maze(){
@@ -166,7 +166,7 @@ void Maze_Making::random_prim_make_maze(const int& types) {
         maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::GROUND );
         //animator->update( 2 );
     }
-    animator->update( 10 );
+    animator->update( 1 );
 
     if(types != 0) {
         int confirm_wall_num = confirm_wall.size() / 2;    //最後牆的數量
@@ -174,7 +174,7 @@ void Maze_Making::random_prim_make_maze(const int& types) {
             random_index = rand() % confirm_wall.size();    //這裡面可能會選到重複的牆(因為每個牆都加進去兩次)
             maze[confirm_wall.at( random_index ).first][confirm_wall.at( random_index ).second] = static_cast<int>( Maze_Elements::GROUND );    //把牆打掉
             confirm_wall.erase( confirm_wall.begin() + random_index );    //把這個牆刪掉(裡面可能還有一個唷記得)
-            animator->update( 2 );    //更新畫面
+            animator->update( 1 );    //更新畫面
         }
     }
 }    // end random_prim_make_maze
@@ -217,7 +217,7 @@ void Maze_Making::recursion_make_maze(){
                 maze[temp.y + 2*dir_y][temp.x + 2*dir_x] = static_cast<int>(Maze_Elements::EXPLORED);
                 re_load.emplace_back(std::make_pair(temp.y + 2*dir_y, temp.x + 2*dir_x));
                 Buffer_Node.first = temp.y + dir_y, Buffer_Node.second = temp.x + dir_x;
-                animator->update( 2 );
+                animator->update( 1 );
             }
             else {
                 ++Walking_List.top().current_index;
@@ -237,7 +237,7 @@ void Maze_Making::recursion_make_maze(){
         maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::GROUND );
         //animator->update( 2 );
     }
-    animator->update( 10 );
+    animator->update( 1 );
 }    //end recursion_make_maze
 
 void Maze_Making::recursive_division(const int uy, const int lx, const int dy, const int rx) {
@@ -252,14 +252,14 @@ void Maze_Making::recursive_division(const int uy, const int lx, const int dy, c
     if (is_horizontal && height - 2 > 0) {
         wall_index = uy + rand()%(height - 2) + 1;
         for(int i = lx; i <= rx; ++i) maze[wall_index][i] = static_cast<int>(Maze_Elements::WALL);    //將這段距離都設圍牆壁
-        animator->update(2);
+        animator->update( 1 );
         recursive_division ( uy, lx, wall_index - 1, rx );    //上面
         recursive_division ( wall_index + 1, lx, dy, rx );    //下面
     }
     else if (!is_horizontal && width - 2 > 0) {
         wall_index = lx + rand()%(width - 2) + 1;
         for(int i = uy; i <= dy; ++i) maze[i][wall_index] = static_cast<int>(Maze_Elements::WALL);    //將這段距離都設圍牆壁
-        animator->update(2);
+        animator->update( 1 );
         recursive_division ( uy, lx, dy, wall_index - 1 );    //左邊
         recursive_division ( uy, wall_index + 1, dy, rx );    //右邊
     }

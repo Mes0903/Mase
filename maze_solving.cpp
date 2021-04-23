@@ -27,14 +27,14 @@ inline int Maze_Solving::pow_two_norm( const int &y, const int &x ) {
 bool Maze_Solving::dfs( const int y, const int x ) {
     maze[1][0] = static_cast<int>( Maze_Elements::BEGIN );    //起點
     Buffer_Node.first = 1, Buffer_Node.second = 0;
-    //animator->update( 2 );
+    //animator->update( 1 );
     maze[y][x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點
     Buffer_Node.first = y, Buffer_Node.second = x;
-    animator->update( 2 );
+    animator->update( 1 );
     if ( y == END_Y && x == END_X ) {    //如果到終點了就回傳True
         maze[y][x] = static_cast<int>( Maze_Elements::END );    //終點
         Buffer_Node.first = -1, Buffer_Node.second = -1;
-        animator->update( 2 );
+        animator->update( 1 );
         return true;
     }
     for ( const auto &[dir_y, dir_x] : directions ) {    //上下左右
@@ -52,7 +52,7 @@ void Maze_Solving::bfs() {
     std::queue<std::pair<int, int>> result;    //存節點的deque
     result.push( std::make_pair( BEGIN_Y, BEGIN_X ) );    //將一開始的節點加入deque
     maze[BEGIN_Y][BEGIN_X] = static_cast<int>( Maze_Elements::BEGIN );    //起點
-    animator->update( 2 );
+    animator->update( 1 );
 
     while ( !result.empty() ) {
         const auto [temp_y, temp_x]{ result.front() };    //目前的節點
@@ -65,11 +65,11 @@ void Maze_Solving::bfs() {
                 if ( maze[y][x] == static_cast<int>( Maze_Elements::GROUND ) ) {    //而且如果這個節點還沒被探索過，也不是牆壁
                     maze[y][x] = static_cast<int>( Maze_Elements::EXPLORED );    //那就探索他，改 EXPLORED
                     Buffer_Node.first = y, Buffer_Node.second = x;
-                    animator->update( 2 );
+                    animator->update( 1 );
                     if ( y == END_Y && x == END_X ) {    //找到終點就return
                         maze[y][x] = static_cast<int>( Maze_Elements::END );    //終點
                         Buffer_Node.first = -1, Buffer_Node.second = -1;
-                        animator->update( 2 );
+                        animator->update( 1 );
                         return;
                     }
                     else
@@ -125,7 +125,7 @@ void Maze_Solving::ucs( const int &types ) {
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::END );    //終點
             Buffer_Node.first = -1, Buffer_Node.second = -1;
-            animator->update( 2 );
+            animator->update( 1 );
             return;    //如果取出的點是終點就return
         }
         else if ( maze[temp.y][temp.x] == static_cast<int>( Maze_Elements::GROUND ) ) {
@@ -135,7 +135,7 @@ void Maze_Solving::ucs( const int &types ) {
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點要改EXPLORED
                 Buffer_Node.first = temp.y, Buffer_Node.second = temp.x;
             }
-            animator->update( 2 );
+            animator->update( 1 );
             for ( const auto &dir : directions ) {
                 const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
 
@@ -183,7 +183,7 @@ void Maze_Solving::greedy() {
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::END );    //終點
             Buffer_Node.first = -1, Buffer_Node.second = -1;
-            animator->update( 2 );
+            animator->update( 1 );
             return;    //如果取出的點是終點就return
         }
         else if ( maze[temp.y][temp.x] == static_cast<int>( Maze_Elements::GROUND ) ) {
@@ -193,7 +193,7 @@ void Maze_Solving::greedy() {
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點要改EXPLORED
                 Buffer_Node.first = temp.y, Buffer_Node.second = temp.x;
             }
-            animator->update( 2 );
+            animator->update( 1 );
             for ( const auto &dir : directions ) {
                 const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
 
@@ -246,7 +246,7 @@ void Maze_Solving::a_star( const int &types ) {
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::END );    //終點
             Buffer_Node.first = -1, Buffer_Node.second = -1;
-            animator->update( 2 );
+            animator->update( 1 );
             return;    //如果取出的點是終點就return
         }
         else if ( maze[temp.y][temp.x] == static_cast<int>( Maze_Elements::GROUND ) ) {
@@ -256,7 +256,7 @@ void Maze_Solving::a_star( const int &types ) {
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點要改EXPLORED
                 Buffer_Node.first = temp.y, Buffer_Node.second = temp.x;
             }
-            animator->update( 2 );
+            animator->update( 1 );
             for ( const auto &dir : directions ) {
                 const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
 
