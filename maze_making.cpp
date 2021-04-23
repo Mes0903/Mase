@@ -6,14 +6,22 @@
 #include <QThread>
 #include <algorithm>
 #include <deque>
+#include <chrono>
 #include <stack>
 #include <iostream>
 #include <random>
 
-Maze_Making::Maze_Making( Animator *A ) : Maze( A ) {
+Maze_Making::Maze_Making( Animator *__Animator ) : Maze( __Animator ) {
 }
 
 Maze_Making::~Maze_Making() {
+}
+
+void Maze_Making::set_Flag() {
+    maze[BEGIN_Y][BEGIN_X] = static_cast<int>(Maze_Elements::BEGIN);
+    maze[END_Y][END_X] = static_cast<int>(Maze_Elements::END);
+    Buffer_Node.first = -1, Buffer_Node.second = -1;
+    animator->update(2);
 }
 
 inline bool Maze_Making::if_in_wall( const int &y, const int &x, const int &delta_y, const int &delta_x ) {
@@ -60,14 +68,17 @@ inline void Maze_Making::set_begin_point(int& seed_y, int& seed_x, std::deque<st
 } //end set_begin_point
 
 
-void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x ) {
+void Maze_Making::random_prim_make_maze(const int& types) {
     initializing_maze();
 
     int seed_y{}, seed_x{};
     std::deque<std::pair<int, int>> re_load;    //之後要改回道路的座標清單
     set_begin_point(seed_y, seed_x, re_load);
     std::deque<std::pair<int, int>> wall;    //待找的牆的列表
-    for ( const auto &[dir_y, dir_x] : directions ) {
+    std::vector<int> direction_order{0, 1, 2, 3};
+    std::random_shuffle(direction_order.begin(), direction_order.end());
+    for ( const int& index : direction_order ) {
+        const auto &[dir_y, dir_x] = directions[index];
         if ( if_in_wall( seed_y, seed_x, dir_y, dir_x ) )
             wall.emplace_back( std::make_pair( seed_y + dir_y, seed_x + dir_x ) );    //將起點四周在迷宮內的牆加入wall列表中
     }
@@ -80,10 +91,13 @@ void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x 
         int temp_y = wall.at( random_index ).first, temp_x = wall.at( random_index ).second;
 
         // 將四周點加進deque裡的函式
-        auto Pushing_Wall = [&temp_y, &temp_x, &re_load, &wall, this]() {
+        auto Pushing_Wall = [&temp_y, &temp_x, &re_load, &wall, &direction_order, this]() {
             maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::EXPLORED );    //將現在的節點(牆壁上下左右其中一個，看哪個方向符合條件) 改為 EXPLORED
+            Buffer_Node.first = temp_y, Buffer_Node.second = temp_x;
             re_load.emplace_back( std::make_pair( temp_y, temp_x ) );    //將這個節點的座標記起來，等等要改回 GROUND
-            for ( const auto &[dir_y, dir_x] : directions ) {    //(新的點的)上下左右遍歷
+            std::random_shuffle(direction_order.begin(), direction_order.end());
+            for ( const int &index : direction_order ) {    //(新的點的)上下左右遍歷
+                const auto &[dir_y, dir_x] = directions[index];
                 if ( if_in_wall( temp_y, temp_x, dir_y, dir_x ) ) {    //如果上(下左右)的牆在迷宮內
                     if ( maze[temp_y + dir_y][temp_x + dir_x] == static_cast<int>( Maze_Elements::WALL ) )    //而且如果這個節點是牆
                         wall.emplace_back( std::make_pair( temp_y + dir_y, temp_x + dir_x ) );    //就將這個節點加入wall列表中
@@ -109,6 +123,7 @@ void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x 
             else {
                 //不然就把牆打通
                 maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::EXPLORED );
+                Buffer_Node.first = temp_y, Buffer_Node.second = temp_x;
                 re_load.emplace_back( std::make_pair( temp_y, temp_x ) );
                 wall.erase( wall.begin() + random_index );
                 animator->update( 1 );
@@ -146,34 +161,31 @@ void Maze_Making::random_prim_make_maze( const int &first_y, const int &first_x 
         }    // end if(maze[temp_y][temp_x] == static_cast<int>(Maze_Elements::WALL))
     }    //end while ( !wall.empty() )
 
+    Buffer_Node.first = -1, Buffer_Node.second = -1;
     for ( const auto &[temp_y, temp_x] : re_load ) {    //把剛剛探索過的點換成 GROUND ，因為我們在生成地圖
         maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::GROUND );
         //animator->update( 2 );
     }
     animator->update( 10 );
 
-    int confirm_wall_num = confirm_wall.size() / 2;    //最後牆的數量
-    for ( int i = rand() % ( confirm_wall_num / 4 ); i != 0; --i ) {    //把最多四分之一的牆打掉
-        random_index = rand() % confirm_wall.size();    //這裡面可能會選到重複的牆(因為每個牆都加進去兩次)
-        maze[confirm_wall.at( random_index ).first][confirm_wall.at( random_index ).second] = static_cast<int>( Maze_Elements::GROUND );    //把牆打掉
-        confirm_wall.erase( confirm_wall.begin() + random_index );    //把這個牆刪掉(裡面可能還有一個唷記得)
-        animator->update( 2 );    //更新畫面
+    if(types != 0) {
+        int confirm_wall_num = confirm_wall.size() / 2;    //最後牆的數量
+        for ( int i = rand() % ( confirm_wall_num / 4 ); i != 0; --i ) {    //把最多四分之一的牆打掉
+            random_index = rand() % confirm_wall.size();    //這裡面可能會選到重複的牆(因為每個牆都加進去兩次)
+            maze[confirm_wall.at( random_index ).first][confirm_wall.at( random_index ).second] = static_cast<int>( Maze_Elements::GROUND );    //把牆打掉
+            confirm_wall.erase( confirm_wall.begin() + random_index );    //把這個牆刪掉(裡面可能還有一個唷記得)
+            animator->update( 2 );    //更新畫面
+        }
     }
-
-    maze[first_y][first_x] = static_cast<int>( Maze_Elements::GROUND );    //入口
-    maze[END_Y][END_X] = static_cast<int>( Maze_Elements::GROUND );    //出口
-    animator->update( 2 );
 }    // end random_prim_make_maze
 
 
-void Maze_Making::recursion_make_maze(const int &first_y, const int &first_x){
+void Maze_Making::recursion_make_maze(){
     initializing_maze();
 
     std::deque<std::pair<int, int>> re_load;    //之後要改回道路的座標清單
     int seed_y{}, seed_x{};    //一開始 x,y 座標
     set_begin_point(seed_y, seed_x, re_load);
-    std::random_device rd;
-    std::mt19937 g(rd());
     std::srand( std::chrono::system_clock::now().time_since_epoch().count() );    //設定隨機數種子
 
     struct Node {
@@ -185,7 +197,6 @@ void Maze_Making::recursion_make_maze(const int &first_y, const int &first_x){
     };
     std::stack<Node> Walking_List;
     Node first_node(seed_y, seed_x, 0);
-    //std::shuffle(std::begin(first_node.walking_order), std::end(first_node.walking_order), g);
     Walking_List.emplace(first_node);
 
     while(!Walking_List.empty()) {
@@ -197,36 +208,77 @@ void Maze_Making::recursion_make_maze(const int &first_y, const int &first_x){
                 ++Walking_List.top().current_index;
                 if(Walking_List.top().current_index > 3)
                     Walking_List.pop();
-                //std::shuffle(std::begin(Walking_List.top().walking_order), std::end(Walking_List.top().walking_order), g);
                 Walking_List.emplace(Node(temp.y+2*dir_y, temp.x+2*dir_x, 0));
+
                 maze[temp.y + dir_y][temp.x + dir_x] = static_cast<int>(Maze_Elements::EXPLORED);
                 re_load.emplace_back(std::make_pair(temp.y + dir_y, temp.x + dir_x));
+                Buffer_Node.first = temp.y + dir_y, Buffer_Node.second = temp.x + dir_x;
+
                 maze[temp.y + 2*dir_y][temp.x + 2*dir_x] = static_cast<int>(Maze_Elements::EXPLORED);
                 re_load.emplace_back(std::make_pair(temp.y + 2*dir_y, temp.x + 2*dir_x));
-                animator->update(2);
+                Buffer_Node.first = temp.y + dir_y, Buffer_Node.second = temp.x + dir_x;
+                animator->update( 2 );
             }
             else {
                 ++Walking_List.top().current_index;
-
                 if(Walking_List.top().current_index > 3)
                     Walking_List.pop();
             }
         }
         else {
             ++Walking_List.top().current_index;
-
             if(Walking_List.top().current_index > 3)
                 Walking_List.pop();
         }
     }
 
+    Buffer_Node.first = -1, Buffer_Node.second = -1;
     for ( const auto &[temp_y, temp_x] : re_load ) {    //把剛剛探索過的點換成 GROUND ，因為我們在生成地圖
         maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::GROUND );
         //animator->update( 2 );
     }
     animator->update( 10 );
-
-    maze[first_y][first_x] = static_cast<int>( Maze_Elements::GROUND );    //入口
-    maze[END_Y][END_X] = static_cast<int>( Maze_Elements::GROUND );    //出口
-    animator->update( 2 );
 }    //end recursion_make_maze
+
+void Maze_Making::recursive_division(const int uy, const int lx, const int dy, const int rx) {
+    std::srand( std::chrono::system_clock::now().time_since_epoch().count() );    //設定隨機數種子
+    int width = rx - lx + 1, height = dy - uy + 1;
+    if( width < 2 && height < 2) return;
+    if( !if_in_wall( uy, lx, height - 1, width - 1 ) )
+        return;
+
+    bool is_horizontal = ( width <= height ) ? true : false;
+    int wall_index;
+    if (is_horizontal && height - 2 > 0) {
+        wall_index = uy + rand()%(height - 2) + 1;
+        for(int i = lx; i <= rx; ++i) maze[wall_index][i] = static_cast<int>(Maze_Elements::WALL);    //將這段距離都設圍牆壁
+        animator->update(2);
+        recursive_division ( uy, lx, wall_index - 1, rx );    //上面
+        recursive_division ( wall_index + 1, lx, dy, rx );    //下面
+    }
+    else if (!is_horizontal && width - 2 > 0) {
+        wall_index = lx + rand()%(width - 2) + 1;
+        for(int i = uy; i <= dy; ++i) maze[i][wall_index] = static_cast<int>(Maze_Elements::WALL);    //將這段距離都設圍牆壁
+        animator->update(2);
+        recursive_division ( uy, lx, dy, wall_index - 1 );    //左邊
+        recursive_division ( uy, wall_index + 1, dy, rx );    //右邊
+    }
+    else
+        return;
+
+    int path_index;
+    if (is_horizontal) {
+        while(true) {
+            path_index = lx + rand()%(width);
+            if (maze[wall_index - 1][path_index] + maze[wall_index + 1][path_index] + maze[wall_index][path_index - 1] + maze[wall_index][path_index + 1] <= 2 * static_cast<int>(Maze_Elements::WALL)) break;
+        }
+        maze[wall_index][path_index] = static_cast<int>(Maze_Elements::GROUND);
+    }
+    else {
+        while(true) {
+            path_index = uy + rand()%(height);
+            if (maze[path_index - 1][wall_index] + maze[path_index + 1][wall_index] + maze[path_index][wall_index - 1] + maze[path_index][wall_index + 1] <= 2 * static_cast<int>(Maze_Elements::WALL)) break;
+        }
+        maze[path_index][wall_index] = static_cast<int>(Maze_Elements::GROUND);
+    }
+} //end Maze_Making::recursive_division

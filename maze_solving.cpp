@@ -26,12 +26,15 @@ inline int Maze_Solving::pow_two_norm( const int &y, const int &x ) {
 
 bool Maze_Solving::dfs( const int y, const int x ) {
     maze[1][0] = static_cast<int>( Maze_Elements::BEGIN );    //起點
-    animator->update( 10 );
+    Buffer_Node.first = 1, Buffer_Node.second = 0;
+    //animator->update( 2 );
     maze[y][x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點
-    animator->update( 10 );
+    Buffer_Node.first = y, Buffer_Node.second = x;
+    animator->update( 2 );
     if ( y == END_Y && x == END_X ) {    //如果到終點了就回傳True
         maze[y][x] = static_cast<int>( Maze_Elements::END );    //終點
-        animator->update( 10 );
+        Buffer_Node.first = -1, Buffer_Node.second = -1;
+        animator->update( 2 );
         return true;
     }
     for ( const auto &[dir_y, dir_x] : directions ) {    //上下左右
@@ -45,13 +48,13 @@ bool Maze_Solving::dfs( const int y, const int x ) {
     return false;
 }    //end Maze_Solving::dfs
 
-void Maze_Solving::bfs( const int &first_y, const int &first_x ) {
+void Maze_Solving::bfs() {
     std::queue<std::pair<int, int>> result;    //存節點的deque
-    result.push( std::make_pair( first_y, first_x ) );    //將一開始的節點加入deque
-    maze[first_y][first_x] = static_cast<int>( Maze_Elements::BEGIN );    //起點
-    animator->update( 5 );
+    result.push( std::make_pair( BEGIN_Y, BEGIN_X ) );    //將一開始的節點加入deque
+    maze[BEGIN_Y][BEGIN_X] = static_cast<int>( Maze_Elements::BEGIN );    //起點
+    animator->update( 2 );
 
-    while ( true ) {
+    while ( !result.empty() ) {
         const auto [temp_y, temp_x]{ result.front() };    //目前的節點
         result.pop();    //將目前的節點拿出來
 
@@ -61,10 +64,12 @@ void Maze_Solving::bfs( const int &first_y, const int &first_x ) {
             if ( is_in_maze( y, x ) ) {    //如果這個節點在迷宮內
                 if ( maze[y][x] == static_cast<int>( Maze_Elements::GROUND ) ) {    //而且如果這個節點還沒被探索過，也不是牆壁
                     maze[y][x] = static_cast<int>( Maze_Elements::EXPLORED );    //那就探索他，改 EXPLORED
-                    animator->update( 5 );
+                    Buffer_Node.first = y, Buffer_Node.second = x;
+                    animator->update( 2 );
                     if ( y == END_Y && x == END_X ) {    //找到終點就return
                         maze[y][x] = static_cast<int>( Maze_Elements::END );    //終點
-                        animator->update( 5 );
+                        Buffer_Node.first = -1, Buffer_Node.second = -1;
+                        animator->update( 2 );
                         return;
                     }
                     else
@@ -75,7 +80,7 @@ void Maze_Solving::bfs( const int &first_y, const int &first_x ) {
     }    //end while
 }    //end Maze_Solving::bfs
 
-void Maze_Solving::ucs( const int &first_y, const int &first_x, const int &types ) {
+void Maze_Solving::ucs( const int &types ) {
 
     enum class Types : int {
         Manhattan_Distance = 0,    //Cost Function 為 曼哈頓距離，所以距離終點越遠 Cost 越大
@@ -97,18 +102,18 @@ void Maze_Solving::ucs( const int &first_y, const int &first_x, const int &types
 
     switch ( types ) {    //起點
         case static_cast<int>( Types::Manhattan_Distance ):
-            weight = abs( END_X - first_x ) + abs( END_Y - first_y );    //權重為曼哈頓距離
+            weight = abs( END_X - BEGIN_X ) + abs( END_Y - BEGIN_Y );    //權重為曼哈頓距離
             break;
         case static_cast<int>( Types::Two_Norm ):
-            weight = pow_two_norm( first_y, first_x );    //權重為 two_norm
+            weight = pow_two_norm( BEGIN_Y, BEGIN_X );    //權重為 two_norm
             break;
         case static_cast<int>( Types::Interval ):
             constexpr int interval_y = MAZE_HEIGHT / 10, interval_x = MAZE_WIDTH / 10;    //分 10 個區間
-            weight = ( static_cast<int>( first_y / interval_y ) < static_cast<int>( first_x / interval_x ) ) ? ( 10 - static_cast<int>( first_y / interval_y ) ) : ( 10 - static_cast<int>( first_x / interval_x ) );    //權重以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎權重，再乘以1000
+            weight = ( static_cast<int>( BEGIN_Y / interval_y ) < static_cast<int>( BEGIN_X / interval_x ) ) ? ( 10 - static_cast<int>( BEGIN_Y / interval_y ) ) : ( 10 - static_cast<int>( BEGIN_X / interval_x ) );    //權重以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎權重，再乘以1000
             break;
     }
 
-    result.emplace( Node( weight, first_y, first_x ) );    //將起點加進去
+    result.emplace( Node( weight, BEGIN_Y, BEGIN_Y ) );    //將起點加進去
 
     while ( true ) {
         if ( result.empty() )
@@ -119,16 +124,18 @@ void Maze_Solving::ucs( const int &first_y, const int &first_x, const int &types
 
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::END );    //終點
-            animator->update( 10 );
+            Buffer_Node.first = -1, Buffer_Node.second = -1;
+            animator->update( 2 );
             return;    //如果取出的點是終點就return
         }
         else if ( maze[temp.y][temp.x] == static_cast<int>( Maze_Elements::GROUND ) ) {
-            if ( temp.y == first_y && temp.x == first_x )
+            if ( temp.y == BEGIN_Y && temp.x == BEGIN_X )
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::BEGIN );    //起點
-            else
+            else {
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點要改EXPLORED
-
-            animator->update( 10 );
+                Buffer_Node.first = temp.y, Buffer_Node.second = temp.x;
+            }
+            animator->update( 2 );
             for ( const auto &dir : directions ) {
                 const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
 
@@ -154,7 +161,7 @@ void Maze_Solving::ucs( const int &first_y, const int &first_x, const int &types
     }    //end while
 }    //end Maze_Solving::ucs
 
-void Maze_Solving::greedy( const int &first_y, const int &first_x ) {
+void Maze_Solving::greedy() {
     struct Node {
         int __Weight;    //權重為 Two_Norm 平方 (Heuristic function)
         int y;    // y座標
@@ -165,7 +172,7 @@ void Maze_Solving::greedy( const int &first_y, const int &first_x ) {
     };
 
     std::priority_queue<Node, std::deque<Node>, std::greater<Node>> result;    //待走的結點，greater代表小的會在前面，由小排到大
-    result.emplace( Node( pow_two_norm( first_y, first_x ), first_y, first_x ) );    //將起點加進去
+    result.emplace( Node( pow_two_norm( BEGIN_Y, BEGIN_X ), BEGIN_Y, BEGIN_X ) );    //將起點加進去
 
     while ( true ) {
         if ( result.empty() )
@@ -175,16 +182,18 @@ void Maze_Solving::greedy( const int &first_y, const int &first_x ) {
 
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::END );    //終點
-            animator->update( 10 );
+            Buffer_Node.first = -1, Buffer_Node.second = -1;
+            animator->update( 2 );
             return;    //如果取出的點是終點就return
         }
         else if ( maze[temp.y][temp.x] == static_cast<int>( Maze_Elements::GROUND ) ) {
-            if ( temp.y == first_y && temp.x == first_x )
+            if ( temp.y == BEGIN_Y && temp.x == BEGIN_X )
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::BEGIN );    //起點
-            else
+            else {
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點要改EXPLORED
-
-            animator->update( 10 );
+                Buffer_Node.first = temp.y, Buffer_Node.second = temp.x;
+            }
+            animator->update( 2 );
             for ( const auto &dir : directions ) {
                 const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
 
@@ -197,7 +206,7 @@ void Maze_Solving::greedy( const int &first_y, const int &first_x ) {
     }    //end while
 }    //end Maze_Solving::greedy
 
-void Maze_Solving::a_star( const int &first_y, const int &first_x, const int &types ) {
+void Maze_Solving::a_star( const int &types ) {
 
     enum class Types : int {
         Normal = 0,    //Cost Function 為 50
@@ -220,13 +229,13 @@ void Maze_Solving::a_star( const int &first_y, const int &first_x, const int &ty
 
     if ( types == static_cast<int>( Types::Normal ) ) {
         cost = 50;
-        weight = cost + abs( END_X - first_x ) + abs( END_Y - first_y );
+        weight = cost + abs( END_X - BEGIN_X ) + abs( END_Y - BEGIN_Y );
     }
     else if ( types == static_cast<int>( Types::Interval ) ) {
-        cost = ( static_cast<int>( first_y / interval_y ) < static_cast<int>( first_x / interval_x ) ) ? ( 10 - static_cast<int>( first_y / interval_y ) ) * 10 : ( 10 - static_cast<int>( first_x / interval_x ) ) * 10;    //Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以1000
-        weight = cost + pow_two_norm( first_y, first_x );    //權重以區間(Cost) + Two_Norm 計算
+        cost = ( static_cast<int>( BEGIN_Y / interval_y ) < static_cast<int>( BEGIN_X / interval_x ) ) ? ( 10 - static_cast<int>( BEGIN_Y / interval_y ) ) * 8 : ( 10 - static_cast<int>( BEGIN_X / interval_x ) ) * 8;    //Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
+        weight = cost + pow_two_norm( BEGIN_Y, BEGIN_X );    //權重以區間(Cost) + Two_Norm 計算
     }
-    result.emplace( Node( cost, weight, first_y, first_x ) );    //將起點加進去
+    result.emplace( Node( cost, weight, BEGIN_Y, BEGIN_X ) );    //將起點加進去
 
     while ( true ) {
         if ( result.empty() )
@@ -236,16 +245,18 @@ void Maze_Solving::a_star( const int &first_y, const int &first_x, const int &ty
 
         if ( temp.y == END_Y && temp.x == END_X ) {
             maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::END );    //終點
-            animator->update( 5 );
+            Buffer_Node.first = -1, Buffer_Node.second = -1;
+            animator->update( 2 );
             return;    //如果取出的點是終點就return
         }
         else if ( maze[temp.y][temp.x] == static_cast<int>( Maze_Elements::GROUND ) ) {
-            if ( temp.y == first_y && temp.x == first_x )
+            if ( temp.y == BEGIN_Y && temp.x == BEGIN_X )
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::BEGIN );    //起點
-            else
+            else {
                 maze[temp.y][temp.x] = static_cast<int>( Maze_Elements::EXPLORED );    //探索過的點要改EXPLORED
-
-            animator->update( 5 );
+                Buffer_Node.first = temp.y, Buffer_Node.second = temp.x;
+            }
+            animator->update( 2 );
             for ( const auto &dir : directions ) {
                 const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
 
@@ -256,7 +267,7 @@ void Maze_Solving::a_star( const int &first_y, const int &first_x, const int &ty
                             weight = cost + abs( END_X - x ) + abs( END_Y - y );    //heuristic function 設為曼哈頓距離
                         }
                         else if ( types == static_cast<int>( Types::Interval ) ) {
-                            cost = ( static_cast<int>( y / interval_y ) < static_cast<int>( x / interval_x ) ) ? temp.__Cost + ( 10 - static_cast<int>( y / interval_y ) ) * 10 : temp.__Cost + ( 10 - static_cast<int>( x / interval_x ) ) * 10;    //Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以1000
+                            cost = ( static_cast<int>( y / interval_y ) < static_cast<int>( x / interval_x ) ) ? temp.__Cost + ( 10 - static_cast<int>( y / interval_y ) ) * 8 : temp.__Cost + ( 10 - static_cast<int>( x / interval_x ) ) * 8;    //Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
                             weight = cost + pow_two_norm( y, x );    //heuristic function 設為 two_norm 平方
                         }
                         result.emplace( Node( cost, weight, y, x ) );

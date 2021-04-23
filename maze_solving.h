@@ -14,11 +14,11 @@ class Maze_Solving : public Maze {
     ~Maze_Solving();
     inline bool is_in_maze( const int &y, const int &x );
     inline int pow_two_norm( const int &y, const int &x );
-    bool dfs( const int first_y, const int first_x );
-    void bfs( const int &first_y, const int &first_x );
-    void ucs( const int &first_y, const int &first_x, const int &types );
-    void greedy( const int &first_y, const int &first_x );
-    void a_star( const int &first_y, const int &first_x, const int &types );
+    bool dfs( const int y, const int x );
+    void bfs();
+    void ucs( const int &types );
+    void greedy();
+    void a_star( const int &types );
 };
 
 #endif    // MAZE_SOLVING_H

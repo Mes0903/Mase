@@ -4,6 +4,8 @@
 #include <QAction>
 #include <QMainWindow>
 
+#include <utility>
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -47,7 +49,9 @@ class MainWindow : public QMainWindow {
     QMenu *MK_Menu;
     QAction *Empty_Map;
     QAction *Rm_Prim_Map;
+    QAction *Multi_Rm_Prim_Map;
     QAction *Recursive_Map;
+    QAction *Recur_div_Map;
 };
 
 #endif    // MAINWINDOW_H
