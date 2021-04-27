@@ -56,6 +56,7 @@
 當走到不行再走的時候就往回
 
 ![](https://i.imgur.com/6bTiPdz.png)
+圖片[連結](https://zhuanlan.zhihu.com/p/27381213)
 
 如此一來就可以建出一個迷宮了。
 
