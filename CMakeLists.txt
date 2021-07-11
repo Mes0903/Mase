@@ -27,20 +27,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
-set(PROJECT_SOURCES
-        src/main.cpp
-        include/mainwindow.h
-        src/mainwindow.cpp
-        include/animator.h
-        src/animator.cpp
-        assets/mainwindow.ui
-        include/maze_making.h
-        src/maze_making.cpp
-        include/maze_solving.h
-        src/maze_solving.cpp
-        include/maze.h
-        src/maze.cpp
-)
+file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
+file(GLOB_RECURSE HEADER_FILES include/*.h)
+file(GLOB_RECURSE ASSETS assets/*.ui)
+
+set(PROJECT_SOURCES ${SOURCE_FILES} ${HEADER_FILES} ${ASSETS})
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Mase
