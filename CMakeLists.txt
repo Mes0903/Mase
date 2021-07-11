@@ -28,18 +28,18 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.h
-        mainwindow.cpp
-        animator.h
-        animator.cpp
-        mainwindow.ui
-        maze_making.h
-        maze_making.cpp
-        maze_solving.h
-        maze_solving.cpp
-        maze.h
-        maze.cpp
+        src/main.cpp
+        include/mainwindow.h
+        src/mainwindow.cpp
+        include/animator.h
+        src/animator.cpp
+        assets/mainwindow.ui
+        include/maze_making.h
+        src/maze_making.cpp
+        include/maze_solving.h
+        src/maze_solving.cpp
+        include/maze.h
+        src/maze.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
