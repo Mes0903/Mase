@@ -5,21 +5,19 @@
 
 #include <QThread>
 #include <algorithm>
-#include <deque>
 #include <chrono>
-#include <stack>
+#include <deque>
 #include <iostream>
 #include <random>
+#include <stack>
 
-Maze_Making::Maze_Making( Animator *__Animator ) : Maze( __Animator ) {
-}
+Maze_Making::Maze_Making( Animator *__Animator ) : Maze( __Animator ) {}
 
-Maze_Making::~Maze_Making() {
-}
+Maze_Making::~Maze_Making() {}
 
 void Maze_Making::set_Flag() {
-    maze[BEGIN_Y][BEGIN_X] = static_cast<int>(Maze_Elements::BEGIN);
-    maze[END_Y][END_X] = static_cast<int>(Maze_Elements::END);
+    maze[BEGIN_Y][BEGIN_X] = static_cast<int>( Maze_Elements::BEGIN );
+    maze[END_Y][END_X] = static_cast<int>( Maze_Elements::END );
     Buffer_Node.first = -1, Buffer_Node.second = -1;
     animator->update( 1 );
 }
@@ -34,9 +32,9 @@ void Maze_Making::empty_map() {
             maze[y][x] = static_cast<int>( Maze_Elements::GROUND );
     }
     animator->update( 1 );
-} // end empty_map()
+}    // end empty_map()
 
-inline void Maze_Making::initializing_maze(){
+inline void Maze_Making::initializing_maze() {
     //地圖初始化
     for ( int y = 0; y < MAZE_HEIGHT; ++y ) {
         for ( int x = 0; x < MAZE_WIDTH; ++x ) {
@@ -52,50 +50,54 @@ inline void Maze_Making::initializing_maze(){
             //animator->update( 2 );    //更新畫面
         }
     }
-} //end initializing_maze()
+}    //end initializing_maze()
 
-inline void Maze_Making::set_begin_point(int& seed_y, int& seed_x, std::deque<std::pair<int ,int>>& re_load) {
-    std::srand( std::chrono::system_clock::now().time_since_epoch().count() );    //設定隨機數種子
+inline void Maze_Making::set_begin_point( int &seed_y, int &seed_x, std::deque<std::pair<int, int>> &re_load ) {
+    std::mt19937 gen( std::chrono::high_resolution_clock::now().time_since_epoch().count() );    // 產生亂數
+    std::uniform_int_distribution<> y_dis( 1, MAZE_HEIGHT - 2 );
+    std::uniform_int_distribution<> x_dis( 1, MAZE_WIDTH - 2 );
     while ( true ) {
-        seed_y = ( rand() % ( MAZE_HEIGHT - 2 ) ) + 1;
-        seed_x = ( rand() % ( MAZE_WIDTH - 2 ) ) + 1;
+        seed_y = y_dis( gen );
+        seed_x = x_dis( gen );
         if ( seed_x % 2 == 1 && seed_y % 2 == 1 ) {
             maze[seed_y][seed_x] = static_cast<int>( Maze_Elements::EXPLORED );    // 隨機挑一點當作生成的起點
+            std::cerr << "seed_x, seed_y = (" << seed_x << "," << seed_y << ")" << '\n';
             re_load.emplace_back( std::make_pair( seed_y, seed_x ) );    //加進之後要改回道路的清單裡
             break;
         }
     }
-} //end set_begin_point
+}    //end set_begin_point
 
-
-void Maze_Making::random_prim_make_maze(const int& types) {
+void Maze_Making::random_prim_make_maze( const int &types ) {
     initializing_maze();
 
     int seed_y{}, seed_x{};
     std::deque<std::pair<int, int>> re_load;    //之後要改回道路的座標清單
-    set_begin_point(seed_y, seed_x, re_load);
+    set_begin_point( seed_y, seed_x, re_load );
     std::deque<std::pair<int, int>> wall;    //待找的牆的列表
-    std::vector<int> direction_order{0, 1, 2, 3};
-    std::random_shuffle(direction_order.begin(), direction_order.end());
-    for ( const int& index : direction_order ) {
+    std::vector<int> direction_order{ 0, 1, 2, 3 };
+    std::mt19937 gen( std::chrono::high_resolution_clock::now().time_since_epoch().count() );    // 產生亂數
+    std::shuffle( direction_order.begin(), direction_order.end(), gen );
+    for ( const int &index : direction_order ) {
         const auto &[dir_y, dir_x] = directions[index];
         if ( if_in_wall( seed_y, seed_x, dir_y, dir_x ) )
             wall.emplace_back( std::make_pair( seed_y + dir_y, seed_x + dir_x ) );    //將起點四周在迷宮內的牆加入wall列表中
     }
 
     int random_index;    //要打通的牆的index，隨機找
-    int up_node, down_node, left_node, right_node;    //目前這個牆的上下左右結點
+    int up_node{ -1 }, down_node{ -1 }, left_node{ -1 }, right_node{ -1 };    //目前這個牆的上下左右結點
     std::deque<std::pair<int, int>> confirm_wall;    //確認是牆壁的列表
     while ( !wall.empty() ) {
-        random_index = rand() % wall.size();
+        std::uniform_int_distribution<> wall_dis( 0, wall.size() - 1 );
+        random_index = wall_dis( gen );
         int temp_y = wall.at( random_index ).first, temp_x = wall.at( random_index ).second;
 
         // 將四周點加進deque裡的函式
-        auto Pushing_Wall = [&temp_y, &temp_x, &re_load, &wall, &direction_order, this]() {
+        auto Pushing_Wall = [&temp_y, &temp_x, &re_load, &wall, &direction_order, &gen, this]() {
             maze[temp_y][temp_x] = static_cast<int>( Maze_Elements::EXPLORED );    //將現在的節點(牆壁上下左右其中一個，看哪個方向符合條件) 改為 EXPLORED
             Buffer_Node.first = temp_y, Buffer_Node.second = temp_x;
             re_load.emplace_back( std::make_pair( temp_y, temp_x ) );    //將這個節點的座標記起來，等等要改回 GROUND
-            std::random_shuffle(direction_order.begin(), direction_order.end());
+            std::shuffle( direction_order.begin(), direction_order.end(), gen );
             for ( const int &index : direction_order ) {    //(新的點的)上下左右遍歷
                 const auto &[dir_y, dir_x] = directions[index];
                 if ( if_in_wall( temp_y, temp_x, dir_y, dir_x ) ) {    //如果上(下左右)的牆在迷宮內
@@ -168,10 +170,12 @@ void Maze_Making::random_prim_make_maze(const int& types) {
     }
     animator->update( 1 );
 
-    if(types != 0) {
+    if ( types != 0 ) {
         int confirm_wall_num = confirm_wall.size() / 2;    //最後牆的數量
-        for ( int i = rand() % ( confirm_wall_num / 4 ); i != 0; --i ) {    //把最多四分之一的牆打掉
-            random_index = rand() % confirm_wall.size();    //這裡面可能會選到重複的牆(因為每個牆都加進去兩次)
+        std::uniform_int_distribution<> conf_dis( 0, confirm_wall_num / 4 - 1 );
+        for ( int i = conf_dis( gen ); i != 0; --i ) {    //把最多四分之一的牆打掉
+            std::uniform_int_distribution<> conf_wall_dis( 0, confirm_wall.size() - 1 );
+            random_index = conf_wall_dis( gen );    //這裡面可能會選到重複的牆(因為每個牆都加進去兩次)
             maze[confirm_wall.at( random_index ).first][confirm_wall.at( random_index ).second] = static_cast<int>( Maze_Elements::GROUND );    //把牆打掉
             confirm_wall.erase( confirm_wall.begin() + random_index );    //把這個牆刪掉(裡面可能還有一個唷記得)
             animator->update( 1 );    //更新畫面
@@ -179,55 +183,54 @@ void Maze_Making::random_prim_make_maze(const int& types) {
     }
 }    // end random_prim_make_maze
 
-
-void Maze_Making::recursion_make_maze(){
+void Maze_Making::recursion_make_maze() {
     initializing_maze();
 
     std::deque<std::pair<int, int>> re_load;    //之後要改回道路的座標清單
     int seed_y{}, seed_x{};    //一開始 x,y 座標
-    set_begin_point(seed_y, seed_x, re_load);
-    std::srand( std::chrono::system_clock::now().time_since_epoch().count() );    //設定隨機數種子
+    set_begin_point( seed_y, seed_x, re_load );
+    std::mt19937 gen( std::chrono::high_resolution_clock::now().time_since_epoch().count() );
 
     struct Node {
         int y, x, current_index;
-        std::vector<int> walking_order{0,1,2,3};
-        Node(int __y, int __x, int __current_index) : y(__y), x(__x), current_index(__current_index){
-            std::random_shuffle(walking_order.begin(), walking_order.end());
+        std::vector<int> walking_order{ 0, 1, 2, 3 };
+        Node( int __y, int __x, int __current_index, std::mt19937 &gen ) : y( __y ), x( __x ), current_index( __current_index ) {
+            std::shuffle( walking_order.begin(), walking_order.end(), gen );
         };
     };
     std::stack<Node> Walking_List;
-    Node first_node(seed_y, seed_x, 0);
-    Walking_List.emplace(first_node);
+    Node first_node( seed_y, seed_x, 0, gen );
+    Walking_List.emplace( first_node );
 
-    while(!Walking_List.empty()) {
+    while ( !Walking_List.empty() ) {
         Node temp = Walking_List.top();
         int &Index = Walking_List.top().walking_order[Walking_List.top().current_index];
         const auto [dir_y, dir_x] = directions[Index];
-        if( if_in_wall( temp.y, temp.x, 2*dir_y, 2*dir_x ) ) {
-            if(maze[temp.y + 2*dir_y][temp.x + 2*dir_x] == static_cast<int>(Maze_Elements::GROUND)) {
+        if ( if_in_wall( temp.y, temp.x, 2 * dir_y, 2 * dir_x ) ) {
+            if ( maze[temp.y + 2 * dir_y][temp.x + 2 * dir_x] == static_cast<int>( Maze_Elements::GROUND ) ) {
                 ++Walking_List.top().current_index;
-                if(Walking_List.top().current_index > 3)
+                if ( Walking_List.top().current_index > 3 )
                     Walking_List.pop();
-                Walking_List.emplace(Node(temp.y+2*dir_y, temp.x+2*dir_x, 0));
+                Walking_List.emplace( Node( temp.y + 2 * dir_y, temp.x + 2 * dir_x, 0, gen ) );
 
-                maze[temp.y + dir_y][temp.x + dir_x] = static_cast<int>(Maze_Elements::EXPLORED);
-                re_load.emplace_back(std::make_pair(temp.y + dir_y, temp.x + dir_x));
+                maze[temp.y + dir_y][temp.x + dir_x] = static_cast<int>( Maze_Elements::EXPLORED );
+                re_load.emplace_back( std::make_pair( temp.y + dir_y, temp.x + dir_x ) );
                 Buffer_Node.first = temp.y + dir_y, Buffer_Node.second = temp.x + dir_x;
 
-                maze[temp.y + 2*dir_y][temp.x + 2*dir_x] = static_cast<int>(Maze_Elements::EXPLORED);
-                re_load.emplace_back(std::make_pair(temp.y + 2*dir_y, temp.x + 2*dir_x));
+                maze[temp.y + 2 * dir_y][temp.x + 2 * dir_x] = static_cast<int>( Maze_Elements::EXPLORED );
+                re_load.emplace_back( std::make_pair( temp.y + 2 * dir_y, temp.x + 2 * dir_x ) );
                 Buffer_Node.first = temp.y + dir_y, Buffer_Node.second = temp.x + dir_x;
                 animator->update( 1 );
             }
             else {
                 ++Walking_List.top().current_index;
-                if(Walking_List.top().current_index > 3)
+                if ( Walking_List.top().current_index > 3 )
                     Walking_List.pop();
             }
         }
         else {
             ++Walking_List.top().current_index;
-            if(Walking_List.top().current_index > 3)
+            if ( Walking_List.top().current_index > 3 )
                 Walking_List.pop();
         }
     }
@@ -240,45 +243,49 @@ void Maze_Making::recursion_make_maze(){
     animator->update( 1 );
 }    //end recursion_make_maze
 
-void Maze_Making::recursive_division(const int uy, const int lx, const int dy, const int rx) {
-    std::srand( std::chrono::system_clock::now().time_since_epoch().count() );    //設定隨機數種子
+void Maze_Making::recursive_division( const int uy, const int lx, const int dy, const int rx ) {
+    std::mt19937 gen( std::chrono::high_resolution_clock::now().time_since_epoch().count() );    // 產生亂數
     int width = rx - lx + 1, height = dy - uy + 1;
-    if( width < 2 && height < 2) return;
-    if( !if_in_wall( uy, lx, height - 1, width - 1 ) )
+    if ( width < 2 && height < 2 ) return;
+    if ( !if_in_wall( uy, lx, height - 1, width - 1 ) )
         return;
 
     bool is_horizontal = ( width <= height ) ? true : false;
     int wall_index;
-    if (is_horizontal && height - 2 > 0) {
-        wall_index = uy + rand()%(height - 2) + 1;
-        for(int i = lx; i <= rx; ++i) maze[wall_index][i] = static_cast<int>(Maze_Elements::WALL);    //將這段距離都設圍牆壁
+    if ( is_horizontal && height - 2 > 0 ) {
+        std::uniform_int_distribution<> h_dis( uy + 1, uy + height - 2 );
+        wall_index = h_dis( gen );
+        for ( int i = lx; i <= rx; ++i ) maze[wall_index][i] = static_cast<int>( Maze_Elements::WALL );    //將這段距離都設圍牆壁
         animator->update( 1 );
-        recursive_division ( uy, lx, wall_index - 1, rx );    //上面
-        recursive_division ( wall_index + 1, lx, dy, rx );    //下面
+        recursive_division( uy, lx, wall_index - 1, rx );    //上面
+        recursive_division( wall_index + 1, lx, dy, rx );    //下面
     }
-    else if (!is_horizontal && width - 2 > 0) {
-        wall_index = lx + rand()%(width - 2) + 1;
-        for(int i = uy; i <= dy; ++i) maze[i][wall_index] = static_cast<int>(Maze_Elements::WALL);    //將這段距離都設圍牆壁
+    else if ( !is_horizontal && width - 2 > 0 ) {
+        std::uniform_int_distribution<> w_dis( lx + 1, lx + width - 2 );
+        wall_index = w_dis( gen );
+        for ( int i = uy; i <= dy; ++i ) maze[i][wall_index] = static_cast<int>( Maze_Elements::WALL );    //將這段距離都設圍牆壁
         animator->update( 1 );
-        recursive_division ( uy, lx, dy, wall_index - 1 );    //左邊
-        recursive_division ( uy, wall_index + 1, dy, rx );    //右邊
+        recursive_division( uy, lx, dy, wall_index - 1 );    //左邊
+        recursive_division( uy, wall_index + 1, dy, rx );    //右邊
     }
     else
         return;
 
     int path_index;
-    if (is_horizontal) {
-        while(true) {
-            path_index = lx + rand()%(width);
-            if (maze[wall_index - 1][path_index] + maze[wall_index + 1][path_index] + maze[wall_index][path_index - 1] + maze[wall_index][path_index + 1] <= 2 * static_cast<int>(Maze_Elements::WALL)) break;
+    if ( is_horizontal ) {
+        while ( true ) {
+            std::uniform_int_distribution<> w_dis( lx, lx + width - 1 );
+            path_index = w_dis( gen );
+            if ( maze[wall_index - 1][path_index] + maze[wall_index + 1][path_index] + maze[wall_index][path_index - 1] + maze[wall_index][path_index + 1] <= 2 * static_cast<int>( Maze_Elements::WALL ) ) break;
         }
-        maze[wall_index][path_index] = static_cast<int>(Maze_Elements::GROUND);
+        maze[wall_index][path_index] = static_cast<int>( Maze_Elements::GROUND );
     }
     else {
-        while(true) {
-            path_index = uy + rand()%(height);
-            if (maze[path_index - 1][wall_index] + maze[path_index + 1][wall_index] + maze[path_index][wall_index - 1] + maze[path_index][wall_index + 1] <= 2 * static_cast<int>(Maze_Elements::WALL)) break;
+        while ( true ) {
+            std::uniform_int_distribution<> h_dis( uy, uy + height - 1 );
+            path_index = h_dis( gen );
+            if ( maze[path_index - 1][wall_index] + maze[path_index + 1][wall_index] + maze[path_index][wall_index - 1] + maze[path_index][wall_index + 1] <= 2 * static_cast<int>( Maze_Elements::WALL ) ) break;
         }
-        maze[path_index][wall_index] = static_cast<int>(Maze_Elements::GROUND);
+        maze[path_index][wall_index] = static_cast<int>( Maze_Elements::GROUND );
     }
-} //end Maze_Making::recursive_division
+}    //end Maze_Making::recursive_division
