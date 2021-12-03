@@ -22,8 +22,8 @@ class Maze {
     ~Maze();
     void reset();
     void reset_wall_around_maze();
-    static inline int maze[MAZE_HEIGHT][MAZE_WIDTH]{ { 0 } };
-    static inline std::pair<int, int> Buffer_Node{-1,-1};
+    static int maze[MAZE_HEIGHT][MAZE_WIDTH];
+    static std::pair<int, int> Buffer_Node;
     Animator* animator;
 
   protected:

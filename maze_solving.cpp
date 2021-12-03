@@ -38,7 +38,7 @@ bool Maze_Solving::dfs( const int y, const int x ) {
         return true;
     }
     for ( const auto &[dir_y, dir_x] : directions ) {    //上下左右
-        const auto [temp_y, temp_x] = ( int[] ){ y + dir_y, x + dir_x };
+        const int temp_y = y + dir_y, temp_x = x + dir_x;
         if ( is_in_maze( temp_y, temp_x ) ) {    //如果這個節點在迷宮內
             if ( maze[temp_y][temp_x] == static_cast<int>( Maze_Elements::GROUND ) )    //而且如果這個節點還沒被探索過
                 if ( Maze_Solving::dfs( temp_y, temp_x ) )    //就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
@@ -59,7 +59,7 @@ void Maze_Solving::bfs() {
         result.pop();    //將目前的節點拿出來
 
         for ( const auto &dir : directions ) {    //遍歷上下左右
-            const auto [y, x] = ( int[] ){ temp_y + dir.first, temp_x + dir.second };    //上下左右的節點
+            const int y = temp_y + dir.first, x = temp_x + dir.second;    //上下左右的節點
 
             if ( is_in_maze( y, x ) ) {    //如果這個節點在迷宮內
                 if ( maze[y][x] == static_cast<int>( Maze_Elements::GROUND ) ) {    //而且如果這個節點還沒被探索過，也不是牆壁
@@ -137,7 +137,7 @@ void Maze_Solving::ucs( const int &types ) {
             }
             animator->update( 1 );
             for ( const auto &dir : directions ) {
-                const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
+                const int y = temp.y + dir.first, x = temp.x + dir.second;
 
                 if ( is_in_maze( y, x ) ) {
                     if ( maze[y][x] == static_cast<int>( Maze_Elements::GROUND ) ) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
@@ -195,7 +195,7 @@ void Maze_Solving::greedy() {
             }
             animator->update( 1 );
             for ( const auto &dir : directions ) {
-                const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
+                const int y = temp.y + dir.first, x = temp.x + dir.second;
 
                 if ( is_in_maze( y, x ) ) {
                     if ( maze[y][x] == static_cast<int>( Maze_Elements::GROUND ) )    // 如果這個結點還沒走過，就把他加到待走的結點裡
@@ -258,7 +258,7 @@ void Maze_Solving::a_star( const int &types ) {
             }
             animator->update( 1 );
             for ( const auto &dir : directions ) {
-                const auto [y, x] = ( int[] ){ temp.y + dir.first, temp.x + dir.second };
+                const int y = temp.y + dir.first, x = temp.x + dir.second;
 
                 if ( is_in_maze( y, x ) ) {
                     if ( maze[y][x] == static_cast<int>( Maze_Elements::GROUND ) ) {    // 如果這個結點還沒走過，就把他加到待走的結點裡

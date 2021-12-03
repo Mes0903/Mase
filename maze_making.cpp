@@ -53,7 +53,9 @@ inline void Maze_Making::initializing_maze() {
 }    //end initializing_maze()
 
 inline void Maze_Making::set_begin_point( int &seed_y, int &seed_x, std::deque<std::pair<int, int>> &re_load ) {
-    std::mt19937 gen( std::chrono::high_resolution_clock::now().time_since_epoch().count() );    // 產生亂數
+    std::random_device rd;
+    std::mt19937 gen( rd() );    // 產生亂數
+    //std::mt19937 gen( std::chrono::high_resolution_clock::now().time_since_epoch().count() );
     std::uniform_int_distribution<> y_dis( 1, MAZE_HEIGHT - 2 );
     std::uniform_int_distribution<> x_dis( 1, MAZE_WIDTH - 2 );
     while ( true ) {

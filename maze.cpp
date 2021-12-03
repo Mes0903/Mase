@@ -3,6 +3,9 @@
 #include "mainwindow.h"
 #include <iostream>
 
+int Maze::maze [MAZE_HEIGHT][MAZE_WIDTH] = {{0}};
+std::pair<int, int> Maze::Buffer_Node = {-1,-1};
+
 Maze::Maze( Animator *A ) : animator( A ) {
 }
 
