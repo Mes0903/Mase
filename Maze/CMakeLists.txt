@@ -1,54 +1,28 @@
-cmake_minimum_required(VERSION 3.5)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-project(Mase VERSION 0.1 LANGUAGES CXX)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
-
-set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.ui
-        animator.h animator.cpp
-        mainwindow.h mainwindow.cpp
-        maze.h maze.cpp
-        maze_making.h maze_making.cpp
-        maze_solving.h maze_solving.cpp
+add_library(
+  MAZE_CORE STATIC
+  ${MAZE_DIR}/src/MazeController.cpp
+  ${MAZE_DIR}/src/MazeModel.cpp
+  ${MAZE_DIR}/src/MazeView.cpp
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(Mase
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-else()
-    if(ANDROID)
-        add_library(Mase SHARED
-            ${PROJECT_SOURCES}
-        )
-    else()
-        add_executable(Mase
-            ${PROJECT_SOURCES}
-        )
-    endif()
-endif()
-
-target_link_libraries(Mase PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
-
-set_target_properties(Mase PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+target_include_directories(
+  MAZE_CORE
+  PRIVATE
+    ${THIRD_DIR}/imgui
+    ${THIRD_DIR}/implot
+    ${THIRD_DIR}/glfw/include
+    ${THIRD_DIR}/glad/include
+    ${MAZE_DIR}/include
+    ${OPENGL_INCLUDE_DIRS}
 )
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(Mase)
-endif()
+target_link_libraries(
+  MAZE_CORE
+  IMGUI_LIB
+  IMPLOT_LIB
+  glfw
+  glad
+  ${OPENGL_LIBRARIES}
+)

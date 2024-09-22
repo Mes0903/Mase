@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(IMGUI_DEMO)
+project(Maze)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -30,8 +30,10 @@ else()
 endif()
 
 set(THIRD_DIR ${PROJECT_SOURCE_DIR}/3rdparty)
+set(MAZE_DIR ${PROJECT_SOURCE_DIR}/Maze)
 
 add_subdirectory(${THIRD_DIR})
+add_subdirectory(${MAZE_DIR})
 
 add_executable(
   ${PROJECT_NAME} 
@@ -45,6 +47,7 @@ target_include_directories(
     ${THIRD_DIR}/implot
     ${THIRD_DIR}/glfw/include
     ${THIRD_DIR}/glad/include
+    ${MAZE_DIR}/include
     ${OPENGL_INCLUDE_DIRS}
 )
 
@@ -52,6 +55,7 @@ target_link_libraries(
   ${PROJECT_NAME}
   IMGUI_LIB
   IMPLOT_LIB
+  MAZE_CORE
   glfw
   glad
   ${OPENGL_LIBRARIES}

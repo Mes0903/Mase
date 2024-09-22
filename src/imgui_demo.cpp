@@ -21,86 +21,9 @@
 
 #include <stdexcept>
 
-#include <vector>
-
-// Maze dimensions
-const int MAZE_WIDTH = 50;
-const int MAZE_HEIGHT = 30;
-
-// Maze data (0 = path, 1 = wall)
-std::vector<std::vector<int>> maze(MAZE_HEIGHT, std::vector<int>(MAZE_WIDTH, 0));
-
-void renderMaze()
-{
-  ImDrawList *draw_list = ImGui::GetWindowDrawList();
-  ImVec2 p = ImGui::GetCursorScreenPos();
-  float cell_size = 20.0f;
-  ImU32 grid_color = IM_COL32(100, 100, 100, 255);    // Dark grey for grid lines
-
-  // Calculate total size of the maze
-  float maze_width = MAZE_WIDTH * cell_size;
-  float maze_height = MAZE_HEIGHT * cell_size;
-
-  // Draw background
-  draw_list->AddRectFilled(p, ImVec2(p.x + maze_width, p.y + maze_height), IM_COL32(255, 255, 255, 255));
-
-  // Draw cells and vertical grid lines
-  for (int x = 0; x <= MAZE_WIDTH; x++) {
-    float x_pos = p.x + x * cell_size;
-    draw_list->AddLine(ImVec2(x_pos, p.y), ImVec2(x_pos, p.y + maze_height), grid_color);
-
-    if (x < MAZE_WIDTH) {
-      for (int y = 0; y < MAZE_HEIGHT; y++) {
-        if (maze[y][x] == 1) {
-          ImVec2 cell_min = ImVec2(x_pos, p.y + y * cell_size);
-          ImVec2 cell_max = ImVec2(cell_min.x + cell_size, cell_min.y + cell_size);
-          draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(128, 64, 64, 255));
-        }
-      }
-    }
-  }
-
-  // Draw horizontal grid lines
-  for (int y = 0; y <= MAZE_HEIGHT; y++) {
-    float y_pos = p.y + y * cell_size;
-    draw_list->AddLine(ImVec2(p.x, y_pos), ImVec2(p.x + maze_width, y_pos), grid_color);
-  }
-}
-
-void renderGUI()
-{
-  // Set initial window position and size, but allow movement
-  ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
-  ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_FirstUseEver);
-
-  // Remove NoMove and NoResize flags
-  ImGui::Begin("Maze Generator and Solver", nullptr, ImGuiWindowFlags_NoTitleBar);
-
-  // Button layout
-  ImGui::BeginGroup();
-  if (ImGui::Button("Generate Maze (DFS)", ImVec2(200, 0))) {
-    // Implement DFS maze generation
-  }
-  if (ImGui::Button("Generate Maze (Prim's)", ImVec2(200, 0))) {
-    // Implement Prim's maze generation
-  }
-  if (ImGui::Button("Solve Maze (A*)", ImVec2(200, 0))) {
-    // Implement A* maze solving
-  }
-  if (ImGui::Button("Solve Maze (BFS)", ImVec2(200, 0))) {
-    // Implement BFS maze solving
-  }
-  ImGui::EndGroup();
-
-  ImGui::SameLine();
-
-  // Maze rendering
-  ImGui::BeginChild("MazeView", ImVec2(0, 0), true);
-  renderMaze();
-  ImGui::EndChild();
-
-  ImGui::End();
-}
+#include "MazeModel.h"
+#include "MazeView.h"
+#include "MazeController.h"
 
 static void glfw_error_callback(int error, const char *description)
 {
@@ -169,6 +92,11 @@ int main(int, char **)
   if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
     throw std::runtime_error("Failed to initialize GLAD");
 
+  MazeModel model(MAZE_HEIGHT, MAZE_WIDTH);
+  MazeView view;
+  MazeController controller;
+
+  // Main loop
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
 
@@ -176,16 +104,7 @@ int main(int, char **)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // Our GUI code
-    {
-      ImGui::Begin("Maze Generator and Solver");
-
-      // Render maze
-      renderGUI();
-      // renderMaze();
-
-      ImGui::End();
-    }
+    view.render();
 
     // Rendering
     ImGui::Render();
