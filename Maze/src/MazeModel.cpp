@@ -58,7 +58,7 @@ void MazeModel::setBufferNode(int y, int x)
 
 /* --------------------maze generation methods -------------------- */
 
-void MazeModel::generateMazePrim(const int &types)
+void MazeModel::generateMazePrim(const int types)
 {
   int seed_y{}, seed_x{};
   std::deque<std::pair<int, int>> re_load;    // 之後要改回道路的座標清單
@@ -282,7 +282,7 @@ void MazeModel::generateMazeRecursionDivision(const int uy, const int lx, const 
 
 /* --------------------maze solving methods -------------------- */
 
-bool MazeModel::solveMazeDFS(const int &y, const int &x)
+bool MazeModel::solveMazeDFS(const int y, const int x)
 {
   maze[1][0] = static_cast<int>(Maze_Elements::BEGIN);    // 起點
   bufferNode.first = 1, bufferNode.second = 0;
@@ -340,7 +340,7 @@ void MazeModel::solveMazeBFS()
   }    // end while
 }    // end solveMazeBFS()
 
-void MazeModel::solveMazeUCS(const int &types)
+void MazeModel::solveMazeUCS(const int types)
 {
   enum class Types : int {
     Manhattan_Distance = 0,    // Cost Function 為 曼哈頓距離，所以距離終點越遠 Cost 越大
@@ -467,7 +467,7 @@ void MazeModel::solveMazeGreedy()
   }    // end while
 }    // end solveMazeGreedy()
 
-void MazeModel::solveMazeAStar(const int &types)
+void MazeModel::solveMazeAStar(const int types)
 {
   enum class Types : int {
     Normal = 0,    // Cost Function 為 50
@@ -548,7 +548,7 @@ void MazeModel::set_Flag()
   // animator->update(1);
 }
 
-inline bool MazeModel::if_in_wall(const int &y, const int &x, const int &delta_y, const int &delta_x)
+bool MazeModel::if_in_wall(const int y, const int x, const int delta_y, const int delta_x)
 {
   return (y + delta_y < MAZE_HEIGHT - 1) && (x + delta_x < MAZE_WIDTH - 1) && (y + delta_y > 0) && (x + delta_x > 0);    // 下牆、右牆、上牆、左牆
 }
@@ -562,14 +562,14 @@ void MazeModel::empty_map()
   // animator->update(1);
 }
 
-inline void MazeModel::initializing_maze()
+void MazeModel::initializing_maze()
 {
   // 地圖初始化
   for (int y = 0; y < MAZE_HEIGHT; ++y) {
     for (int x = 0; x < MAZE_WIDTH; ++x) {
-      if (y == 0 or y == MAZE_HEIGHT - 1)    // 上牆或下牆
+      if (y == 0 || y == MAZE_HEIGHT - 1)    // 上牆或下牆
         maze[y][x] = static_cast<int>(Maze_Elements::WALL);
-      else if (x == 0 or x == MAZE_WIDTH - 1)    // 左牆或右牆
+      else if (x == 0 || x == MAZE_WIDTH - 1)    // 左牆或右牆
         maze[y][x] = static_cast<int>(Maze_Elements::WALL);
     }
   }
@@ -595,12 +595,12 @@ void MazeModel::set_end_point(int &seed_y, int &seed_x, std::deque<std::pair<int
   re_load.push_back(std::make_pair(seed_y, seed_x));
 }
 
-inline bool MazeModel::is_in_maze(const int &y, const int &x)
+bool MazeModel::is_in_maze(const int y, const int x)
 {
   return (y < MAZE_HEIGHT) && (x < MAZE_WIDTH) && (y >= 0) && (x >= 0);
 }
 
-inline int MazeModel::pow_two_norm(const int &y, const int &x)
+int MazeModel::pow_two_norm(const int y, const int x)
 {
   return pow((END_Y - y), 2) + pow((END_X - x), 2);
 }

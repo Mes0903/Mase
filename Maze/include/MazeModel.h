@@ -41,29 +41,29 @@ public:
   void setBufferNode(int y, int x);
 
   // maze generation and solving methods
-  void generateMazePrim(const int &types);
+  void generateMazePrim(const int types);
   void generateMazeRecursion();
   void generateMazeRecursionDivision(const int uy, const int lx, const int dy, const int rx);
 
-  bool solveMazeDFS(const int &y, const int &x);
+  bool solveMazeDFS(const int y, const int x);
   void solveMazeBFS();
-  void solveMazeUCS(const int &types);
+  void solveMazeUCS(const int types);
   void solveMazeGreedy();
-  void solveMazeAStar(const int &types);
+  void solveMazeAStar(const int types);
 
 private:
   std::vector<std::vector<int>> maze;
   std::pair<int, int> bufferNode;
 
   void set_Flag();
-  inline bool if_in_wall(const int &y, const int &x, const int &delta_y, const int &delta_x);
+  bool if_in_wall(const int y, const int x, const int delta_y, const int delta_x);
   void empty_map();
-  inline void initializing_maze();
+  void initializing_maze();
 
   void set_begin_point(int &seed_y, int &seed_x, std::deque<std::pair<int, int>> &re_load);
   void set_end_point(int &seed_y, int &seed_x, std::deque<std::pair<int, int>> &re_load);
-  bool is_in_maze(const int &y, const int &x);
-  int pow_two_norm(const int &y, const int &x);
+  bool is_in_maze(const int y, const int x);
+  int pow_two_norm(const int y, const int x);
 };
 
 #endif
