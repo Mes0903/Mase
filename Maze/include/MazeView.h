@@ -16,9 +16,10 @@ class MazeController;
 class MazeView {
 public:
   void render();
+  void setController(MazeController *controller_ptr);
 
 private:
-  std::unique_ptr<MazeController> controller;
+  std::unique_ptr<MazeController> controller_ptr;
 
   void renderMaze();
   void renderGUI();

@@ -96,6 +96,10 @@ int main(int, char **)
   MazeView view;
   MazeController controller;
 
+  controller.setModelView(&model, &view);
+  view.setController(&controller);
+  model.setController(&controller);
+
   // Main loop
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
