@@ -10,6 +10,7 @@
  */
 #include <vector>
 #include <deque>
+#include <memory>
 #include <utility>
 
 inline constexpr int MAZE_HEIGHT = 39;
@@ -30,9 +31,30 @@ enum class Maze_Elements : int {
   END = 10,
 };
 
+enum class MazeAction : int {
+  G_RESET,
+  G_PRIMS,
+  G_PRIMS_BREAK_WALL,
+  G_RECURSION_BACKTRACKER,
+  G_RECURSION_DIVISION,
+  S_DFS,
+  S_BFS,
+  S_UCS_MANHATTAN,    // Cost Function 為 Two_Norm，所以距離終點越遠 Cost 越大
+  S_UCS_TWO_NORM,    // Cost Function 為 Two_Norm，所以距離終點越遠 Cost 越大
+  S_UCS_INTERVAL,    // Cost Function 以區間來計算，每一個區間 Cost 差10，距離終點越遠 Cost 越大
+  S_GREEDY,
+  S_ASTAR,
+  S_ASTAR_INTERVAL
+};
+
+class MazeController;
+
 class MazeModel {
 public:
   MazeModel(int height, int width);
+  void setController(MazeController *controller_ptr);
+
+public:
   void resetMaze();
   void resetWallAroundMaze();
   int getMazeCell(int y, int x) const;
@@ -41,17 +63,19 @@ public:
   void setBufferNode(int y, int x);
 
   // maze generation and solving methods
-  void generateMazePrim(const int types);
-  void generateMazeRecursion();
+  void generateMazePrim(const MazeAction actions);
+  void generateMazeRecursionBacktracker();
   void generateMazeRecursionDivision(const int uy, const int lx, const int dy, const int rx);
 
   bool solveMazeDFS(const int y, const int x);
   void solveMazeBFS();
-  void solveMazeUCS(const int types);
+  void solveMazeUCS(const MazeAction actions);
   void solveMazeGreedy();
-  void solveMazeAStar(const int types);
+  void solveMazeAStar(const MazeAction actions);
 
 private:
+  std::unique_ptr<MazeController> controller_ptr;
+
   std::vector<std::vector<int>> maze;
   std::pair<int, int> bufferNode;
 

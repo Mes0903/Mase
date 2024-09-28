@@ -9,6 +9,9 @@
  * @date 2024-09-22
  */
 
+#include "MazeModel.h"
+#include "MazeView.h"
+
 #include <memory>
 
 class MazeModel;
@@ -16,8 +19,8 @@ class MazeView;
 
 class MazeController {
 public:
-  void init(MazeModel *model_ptr, MazeView *view_ptr);
-  void handleInput();
+  void setModelView(MazeModel *model_ptr, MazeView *view_ptr);
+  void handleInput(const MazeAction action);
 
   // api for view
   int getMazeCell(int y, int x) const;

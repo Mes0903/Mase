@@ -10,10 +10,15 @@
 #include <stack>
 #include <queue>
 #include <utility>
-
+#include <memory>
 
 MazeModel::MazeModel(int height, int width)
     : maze(height, std::vector<int>(width, 0)), bufferNode(-1, -1) {}
+
+void MazeModel::setController(MazeController *controller_ptr)
+{
+  this->controller_ptr = std::unique_ptr<MazeController>(controller_ptr);
+}
 
 void MazeModel::resetMaze()
 {
@@ -58,7 +63,7 @@ void MazeModel::setBufferNode(int y, int x)
 
 /* --------------------maze generation methods -------------------- */
 
-void MazeModel::generateMazePrim(const int types)
+void MazeModel::generateMazePrim(const MazeAction actions)
 {
   int seed_y{}, seed_x{};
   std::deque<std::pair<int, int>> re_load;    // 之後要改回道路的座標清單
@@ -159,7 +164,7 @@ void MazeModel::generateMazePrim(const int types)
   }
   // animator->update(1);
 
-  if (types != 0) {
+  if (actions == MazeAction::G_PRIMS_BREAK_WALL) {
     int confirm_wall_num = confirm_wall.size() / 2;    // 最後牆的數量
     std::uniform_int_distribution<> conf_dis(0, confirm_wall_num / 4 - 1);
     for (int i = conf_dis(gen); i != 0; --i) {    // 把最多四分之一的牆打掉
@@ -172,7 +177,7 @@ void MazeModel::generateMazePrim(const int types)
   }
 }    // end generateMazePrim()
 
-void MazeModel::generateMazeRecursion()
+void MazeModel::generateMazeRecursionBacktracker()
 {
   std::deque<std::pair<int, int>> re_load;    // 之後要改回道路的座標清單
   int seed_y{}, seed_x{};    // 一開始 x,y 座標
@@ -230,7 +235,7 @@ void MazeModel::generateMazeRecursion()
     // // animator->update( 2 );
   }
   // animator->update(1);
-}    // end generateMazeRecursion()
+}    // end generateMazeRecursionBacktracker()
 
 void MazeModel::generateMazeRecursionDivision(const int uy, const int lx, const int dy, const int rx)
 {
@@ -340,14 +345,8 @@ void MazeModel::solveMazeBFS()
   }    // end while
 }    // end solveMazeBFS()
 
-void MazeModel::solveMazeUCS(const int types)
+void MazeModel::solveMazeUCS(const MazeAction actions)
 {
-  enum class Types : int {
-    Manhattan_Distance = 0,    // Cost Function 為 曼哈頓距離，所以距離終點越遠 Cost 越大
-    Two_Norm = 1,    // Cost Function 為 Two_Norm，所以距離終點越遠 Cost 越大
-    Interval = 2    // Cost Function 以區間來計算，每一個區間 Cost 差10，距離終點越遠 Cost 越大
-  };
-
   struct Node {
     int __Weight;    // 權重 (Cost Function)
     int y;    // y座標
@@ -360,14 +359,14 @@ void MazeModel::solveMazeUCS(const int types)
   std::priority_queue<Node, std::deque<Node>, std::greater<Node>> result;    // 待走的結點，greater代表小的會在前面，由小排到大
   int weight{};    // 用來計算的權重
 
-  switch (types) {    // 起點
-  case static_cast<int>(Types::Manhattan_Distance):
+  switch (actions) {    // 起點
+  case MazeAction::S_UCS_MANHATTAN:
     weight = abs(END_X - BEGIN_X) + abs(END_Y - BEGIN_Y);    // 權重為曼哈頓距離
     break;
-  case static_cast<int>(Types::Two_Norm):
+  case MazeAction::S_UCS_TWO_NORM:
     weight = pow_two_norm(BEGIN_Y, BEGIN_X);    // 權重為 two_norm
     break;
-  case static_cast<int>(Types::Interval):
+  case MazeAction::S_UCS_INTERVAL:
     constexpr int interval_y = MAZE_HEIGHT / 10, interval_x = MAZE_WIDTH / 10;    // 分 10 個區間
     weight = (static_cast<int>(BEGIN_Y / interval_y) < static_cast<int>(BEGIN_X / interval_x)) ? (10 - static_cast<int>(BEGIN_Y / interval_y)) : (10 - static_cast<int>(BEGIN_X / interval_x));    // 權重以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎權重，再乘以1000
     break;
@@ -401,14 +400,14 @@ void MazeModel::solveMazeUCS(const int types)
 
         if (is_in_maze(y, x)) {
           if (maze[y][x] == static_cast<int>(Maze_Elements::GROUND)) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
-            switch (types) {
-            case static_cast<int>(Types::Manhattan_Distance):
+            switch (actions) {
+            case MazeAction::S_UCS_MANHATTAN:
               weight = abs(END_X - x) + abs(END_Y - y);    // 權重為曼哈頓距離
               break;
-            case static_cast<int>(Types::Two_Norm):
+            case MazeAction::S_UCS_TWO_NORM:
               weight = pow_two_norm(y, x);    // 權重為 Two_Norm
               break;
-            case static_cast<int>(Types::Interval):
+            case MazeAction::S_UCS_INTERVAL:
               constexpr int interval_y = MAZE_HEIGHT / 10, interval_x = MAZE_WIDTH / 10;    // 分 10 個區間
               weight = (static_cast<int>(y / interval_y) < static_cast<int>(x / interval_x)) ? (10 - static_cast<int>(y / interval_y)) : (10 - static_cast<int>(x / interval_x));    // 權重為區間
               break;
@@ -467,7 +466,7 @@ void MazeModel::solveMazeGreedy()
   }    // end while
 }    // end solveMazeGreedy()
 
-void MazeModel::solveMazeAStar(const int types)
+void MazeModel::solveMazeAStar(const MazeAction actions)
 {
   enum class Types : int {
     Normal = 0,    // Cost Function 為 50
@@ -488,11 +487,11 @@ void MazeModel::solveMazeAStar(const int types)
   constexpr int interval_y = MAZE_HEIGHT / 10, interval_x = MAZE_WIDTH / 10;    // 分 10 個區間
   int cost{}, weight{};
 
-  if (types == static_cast<int>(Types::Normal)) {
+  if (actions == MazeAction::S_ASTAR_INTERVAL) {
     cost = 50;
     weight = cost + abs(END_X - BEGIN_X) + abs(END_Y - BEGIN_Y);
   }
-  else if (types == static_cast<int>(Types::Interval)) {
+  else if (actions == MazeAction::S_ASTAR_INTERVAL) {
     cost = (static_cast<int>(BEGIN_Y / interval_y) < static_cast<int>(BEGIN_X / interval_x)) ? (10 - static_cast<int>(BEGIN_Y / interval_y)) * 8 : (10 - static_cast<int>(BEGIN_X / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
     weight = cost + pow_two_norm(BEGIN_Y, BEGIN_X);    // 權重以區間(Cost) + Two_Norm 計算
   }
@@ -523,11 +522,11 @@ void MazeModel::solveMazeAStar(const int types)
 
         if (is_in_maze(y, x)) {
           if (maze[y][x] == static_cast<int>(Maze_Elements::GROUND)) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
-            if (types == static_cast<int>(Types::Normal)) {
+            if (actions == MazeAction::S_ASTAR_INTERVAL) {
               cost = 50;    // cost function設為常數 50
               weight = cost + abs(END_X - x) + abs(END_Y - y);    // heuristic function 設為曼哈頓距離
             }
-            else if (types == static_cast<int>(Types::Interval)) {
+            else if (actions == MazeAction::S_ASTAR_INTERVAL) {
               cost = (static_cast<int>(y / interval_y) < static_cast<int>(x / interval_x)) ? temp.__Cost + (10 - static_cast<int>(y / interval_y)) * 8 : temp.__Cost + (10 - static_cast<int>(x / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
               weight = cost + pow_two_norm(y, x);    // heuristic function 設為 two_norm 平方
             }
