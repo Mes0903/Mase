@@ -10,21 +10,30 @@
  */
 
 #include <memory>
+#include <queue>
+#include <utility>
 
 class MazeController;
 
 class MazeView {
 public:
-  void render();
+  MazeView(uint32_t height, uint32_t width);
   void setController(MazeController *controller_ptr);
 
-private:
-  std::unique_ptr<MazeController> controller_ptr;
-
-  void renderMaze();
   void renderGUI();
+  void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
+  void enFramequeue(const int y, const int x, const MazeElement element);
 
-  // Add other private methods as needed
+private:
+  std::vector<std::vector<MazeElement>> render_maze;
+  std::unique_ptr<MazeController> controller_ptr;
+  std::queue<std::tuple<int, int, MazeElement>> frame_queue;
+  std::tuple<int, int, MazeElement> update_pos;
+  bool stop_flag;
+
+private:
+  void deFramequeue();
+  void renderMaze();
 };
 
 #endif
