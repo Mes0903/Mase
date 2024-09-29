@@ -6,6 +6,8 @@
 #include "MazeView.h"
 
 #include <iostream>
+#include <thread>
+
 
 void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 {
@@ -15,15 +17,15 @@ void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 
 void MazeController::handleInput(const MazeAction actions)
 {
+  std::thread t1;
+
   switch (actions) {
   case MazeAction::G_RESET:
     model_ptr->resetMaze();
     break;
   case MazeAction::G_PRIMS:
-    model_ptr->generateMazePrim(actions);
-    break;
-  case MazeAction::G_PRIMS_BREAK_WALL:
-    model_ptr->generateMazePrim(actions);
+    t1 = std::thread(&MazeModel::generateMazePrim, std::ref(*model_ptr));
+    t1.join();
     break;
   case MazeAction::G_RECURSION_BACKTRACKER:
     model_ptr->generateMazeRecursionBacktracker();
@@ -61,18 +63,12 @@ void MazeController::handleInput(const MazeAction actions)
   }
 }
 
-// api to conatact model_ptr
-int MazeController::getMazeCell(int y, int x) const
+void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
 {
-  return model_ptr->getMazeCell(y, x);
+  view_ptr->setFrameMaze(maze);
 }
 
-std::pair<int, int> MazeController::getBufferNode() const
+void MazeController::enFramequeue(const int32_t y, const int32_t x, const MazeElement element)
 {
-  return model_ptr->getBufferNode();
-}
-
-void MazeController::initializing_maze()
-{
-  model_ptr->resetMaze();
+  view_ptr->enFramequeue(y, x, element);
 }

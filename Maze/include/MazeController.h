@@ -20,17 +20,17 @@ class MazeView;
 class MazeController {
 public:
   void setModelView(MazeModel *model_ptr, MazeView *view_ptr);
-  void handleInput(const MazeAction action);
 
-  // api for view
-  int getMazeCell(int y, int x) const;
-  std::pair<int, int> getBufferNode() const;
+  void handleInput(const MazeAction action);
+  void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
+  void enFramequeue(const int32_t y, const int32_t x, const MazeElement element);
+
+public:
+  std::mutex g_mutex;
 
 private:
   std::unique_ptr<MazeModel> model_ptr;
   std::unique_ptr<MazeView> view_ptr;
-
-  void initializing_maze();
 };
 
 #endif

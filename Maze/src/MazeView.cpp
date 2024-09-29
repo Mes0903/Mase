@@ -5,15 +5,38 @@
 #include "MazeView.h"
 
 #include <memory>
+#include <cstdint>
 
-void MazeView::render()
-{
-  renderGUI();
-}
+MazeView::MazeView(uint32_t height, uint32_t width)
+    : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_pos{ std::make_tuple(-1, -1, MazeElement::INVALID) }, stop_flag{ false } {}
 
 void MazeView::setController(MazeController *controller_ptr)
 {
   this->controller_ptr = std::unique_ptr<MazeController>(controller_ptr);
+}
+
+void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
+{
+  std::lock_guard<std::mutex> lock(controller_ptr->g_mutex);
+  render_maze = maze;
+}
+
+void MazeView::enFramequeue(const int32_t y, const int32_t x, const MazeElement element)
+{
+  std::lock_guard<std::mutex> lock(controller_ptr->g_mutex);
+  frame_queue.emplace(std::make_tuple(y, x, element));
+}
+
+void MazeView::deFramequeue()
+{
+  std::lock_guard<std::mutex> lock(controller_ptr->g_mutex);
+  if (frame_queue.empty())
+    return;
+
+  update_pos = frame_queue.front();
+  frame_queue.pop();
+  if (std::get<0>(update_pos) != -1 && std::get<1>(update_pos) != -1)
+    render_maze[std::get<0>(update_pos)][std::get<1>(update_pos)] = std::get<2>(update_pos);
 }
 
 void MazeView::renderMaze()
@@ -21,39 +44,43 @@ void MazeView::renderMaze()
   ImDrawList *draw_list = ImGui::GetWindowDrawList();
   const ImVec2 p = ImGui::GetCursorScreenPos();
   const float cell_size = 15.0f;
-  const ImU32 colors[] = {
-    IM_COL32(255, 255, 255, 255),    // Ground
-    IM_COL32(115, 64, 70, 255),    // Wall
-    IM_COL32(231, 158, 79, 255),    // Explored
-    IM_COL32(35, 220, 130, 255),    // Begin
-    IM_COL32(250, 50, 150, 255)    // End
-  };
 
-  for (int y = 0; y < MAZE_HEIGHT; ++y) {
-    for (int x = 0; x < MAZE_WIDTH; ++x) {
-      int cell = controller_ptr->getMazeCell(y, x);
+  for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
+    for (int32_t x = 0; x < MAZE_WIDTH; ++x) {
+      MazeElement cell = render_maze[y][x];
       ImVec2 cell_min = ImVec2(p.x + x * cell_size, p.y + y * cell_size);
       ImVec2 cell_max = ImVec2(cell_min.x + cell_size, cell_min.y + cell_size);
-      draw_list->AddRectFilled(cell_min, cell_max, colors[cell]);
+
+      if (std::get<0>(update_pos) == y && std::get<1>(update_pos) == x)
+        draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(50, 215, 250, 255));
+      else if (cell == MazeElement::BEGIN)
+        draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(35, 220, 130, 255));
+      else if (cell == MazeElement::END)
+        draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(250, 50, 150, 255));
+      else if (cell == MazeElement::WALL)
+        draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(115, 64, 70, 255));
+      else if (cell == MazeElement::GROUND)
+        draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(255, 255, 255, 255));
+      else if (cell == MazeElement::EXPLORED)
+        draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(231, 158, 79, 255));
+
       draw_list->AddRect(cell_min, cell_max, IM_COL32(100, 100, 100, 255));
     }
-  }
-
-  auto [buffer_y, buffer_x] = controller_ptr->getBufferNode();
-  if (buffer_y != -1 && buffer_x != -1) {
-    ImVec2 buffer_min = ImVec2(p.x + buffer_x * cell_size, p.y + buffer_y * cell_size);
-    ImVec2 buffer_max = ImVec2(buffer_min.x + cell_size, buffer_min.y + cell_size);
-    draw_list->AddRectFilled(buffer_min, buffer_max, IM_COL32(50, 215, 250, 255));
   }
 }
 
 void MazeView::renderGUI()
 {
+  if (!stop_flag)
+    deFramequeue();
+
   ImGui::Begin("Maze Generator and Solver");
 
   ImGui::BeginGroup();
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::Checkbox("Stop", &stop_flag);
   if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr->handleInput(MazeAction::G_PRIMS);
-  if (ImGui::Button("Generate Maze (Prim's Break Wall)")) controller_ptr->handleInput(MazeAction::G_PRIMS_BREAK_WALL);
   if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
   if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr->handleInput(MazeAction::G_RECURSION_DIVISION);
   if (ImGui::Button("Solve Maze (DFS)")) controller_ptr->handleInput(MazeAction::S_DFS);
@@ -68,6 +95,7 @@ void MazeView::renderGUI()
 
   ImGui::SameLine();
   ImGui::BeginChild("MazeView", ImVec2(0, 0), true);
+  // std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   renderMaze();
   ImGui::EndChild();
 
