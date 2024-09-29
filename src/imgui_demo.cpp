@@ -65,7 +65,7 @@ int main(int, char **)
     return 1;
 
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(1);    // Enable vsync
+  glfwSwapInterval(0);    // Enable vsync
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -93,7 +93,7 @@ int main(int, char **)
     throw std::runtime_error("Failed to initialize GLAD");
 
   MazeModel model(MAZE_HEIGHT, MAZE_WIDTH);
-  MazeView view;
+  MazeView view(MAZE_HEIGHT, MAZE_WIDTH);
   MazeController controller;
 
   controller.setModelView(&model, &view);
@@ -108,7 +108,7 @@ int main(int, char **)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    view.render();
+    view.renderGUI();
 
     // Rendering
     ImGui::Render();
