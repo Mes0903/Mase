@@ -22,10 +22,11 @@ void MazeController::handleInput(const MazeAction actions)
     break;
   case MazeAction::G_PRIMS:
     t1 = std::thread(&MazeModel::generateMazePrim, std::ref(*model_ptr));
-    t1.join();
+    t1.detach();
     break;
   case MazeAction::G_RECURSION_BACKTRACKER:
-    model_ptr->generateMazeRecursionBacktracker();
+    t1 = std::thread(&MazeModel::generateMazeRecursionBacktracker, std::ref(*model_ptr));
+    t1.detach();
     break;
   case MazeAction::G_RECURSION_DIVISION:
     model_ptr->generateMazeRecursionDivision(1, 1, MAZE_HEIGHT - 2, MAZE_WIDTH - 2);
