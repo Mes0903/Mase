@@ -60,19 +60,22 @@ void MazeModel::generateMazePrim()
 {
   resetMaze();
 
-  std::vector<MazeNode> explored_cache;
-  MazeNode seed_node;
-  setBeginPoint(seed_node);
-  explored_cache.emplace_back(seed_node);
-
-  std::vector<MazeNode> candidate_list;    // 待找的牆的列表
-  std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
-  std::shuffle(direction_order.begin(), direction_order.end(), gen);
-  for (const int32_t index : direction_order) {
-    const auto [dir_y, dir_x] = dir_vec[index];
-    if (inMaze(seed_node, dir_y, dir_x))
-      candidate_list.emplace_back(MazeNode{ seed_node.y + dir_y, seed_node.x + dir_x, maze[seed_node.y + dir_y][seed_node.x + dir_x] });    // 將起點四周在迷宮內的牆加入 candidate_list 列表中
+  std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
+  std::vector<MazeNode> explored_cache;
+  std::vector<MazeNode> candidate_list;    // 待找的牆的列表
+
+  {
+    MazeNode seed_node;
+    setBeginPoint(seed_node);
+    explored_cache.emplace_back(seed_node);
+
+    std::shuffle(direction_order.begin(), direction_order.end(), gen);
+    for (const int32_t index : direction_order) {
+      const auto [dir_y, dir_x] = dir_vec[index];
+      if (inMaze(seed_node, dir_y, dir_x))
+        candidate_list.emplace_back(MazeNode{ seed_node.y + dir_y, seed_node.x + dir_x, maze[seed_node.y + dir_y][seed_node.x + dir_x] });    // 將起點四周在迷宮內的牆加入 candidate_list 列表中
+    }
   }
 
   while (!candidate_list.empty()) {
@@ -148,7 +151,6 @@ void MazeModel::generateMazeRecursionBacktracker()
   setBeginPoint(seed_node);
   explored_cache.emplace(seed_node);
 
-
   std::stack<MazeNode> candidate_list;
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -156,7 +158,7 @@ void MazeModel::generateMazeRecursionBacktracker()
   for (const int32_t index : direction_order) {
     const auto [dir_y, dir_x] = dir_vec[index];
     if (inMaze(seed_node, 2 * dir_y, 2 * dir_x))
-      candidate_list.emplace(MazeNode{ seed_node.y + 2 * dir_y, seed_node.x + 2 * dir_x, MazeElement::INVALID });
+      candidate_list.emplace(MazeNode{ seed_node.y + 2 * dir_y, seed_node.x + 2 * dir_x, maze[seed_node.y + dir_y][seed_node.x + dir_x] });
   }
 
   MazeNode current_element{ seed_node };
