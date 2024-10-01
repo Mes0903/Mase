@@ -8,6 +8,10 @@
  * @version 0.1
  * @date 2024-09-22
  */
+
+#include "MazeNode.h"
+#include "MazeController.h"
+
 #include <vector>
 #include <memory>
 #include <utility>
@@ -22,15 +26,6 @@ inline constexpr int32_t END_Y = MAZE_HEIGHT - 2;
 inline constexpr int32_t END_X = MAZE_WIDTH - 1;
 inline constexpr int32_t GRID_SIZE = 25;
 inline constexpr std::pair<int32_t, int32_t> dir_vec[4]{ { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
-enum class MazeElement : int32_t {
-  INVALID = -1,
-  WALL = 0,
-  GROUND = 1,
-  EXPLORED = 2,
-  BEGIN = 9,
-  END = 10,
-};
 
 enum class MazeAction : int32_t {
   G_RESET,
@@ -77,9 +72,9 @@ private:
 
 private:
   void setFlag();
-  bool inMaze(const int32_t y, const int32_t x, const int32_t delta_y, const int32_t delta_x);
+  bool inMaze(const MazeNode &node, const int32_t delta_y, const int32_t delta_x);
 
-  void setBeginPoint(int32_t &seed_y, int32_t &seed_x);
+  void setBeginPoint(MazeNode &node);
   bool is_in_maze(const int32_t y, const int32_t x);
   int32_t pow_two_norm(const int32_t y, const int32_t x);
 };

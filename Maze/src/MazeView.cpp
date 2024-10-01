@@ -3,12 +3,13 @@
 #include "MazeController.h"
 #include "MazeModel.h"
 #include "MazeView.h"
+#include "MazeNode.h"
 
 #include <memory>
 #include <cstdint>
 
 MazeView::MazeView(uint32_t height, uint32_t width)
-    : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_pos{ std::make_tuple(-1, -1, MazeElement::INVALID) }, stop_flag{ false } {}
+    : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag{ false } {}
 
 void MazeView::setController(MazeController *controller_ptr)
 {
@@ -21,10 +22,10 @@ void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
   render_maze = maze;
 }
 
-void MazeView::enFramequeue(const int32_t y, const int32_t x, const MazeElement element)
+void MazeView::enFramequeue(const MazeNode &node)
 {
   std::lock_guard<std::mutex> lock(controller_ptr->g_mutex);
-  frame_queue.emplace(std::make_tuple(y, x, element));
+  frame_queue.emplace(node);
 }
 
 void MazeView::deFramequeue()
@@ -33,10 +34,10 @@ void MazeView::deFramequeue()
   if (frame_queue.empty())
     return;
 
-  update_pos = frame_queue.front();
+  update_node = frame_queue.front();
   frame_queue.pop();
-  if (std::get<0>(update_pos) != -1 && std::get<1>(update_pos) != -1)
-    render_maze[std::get<0>(update_pos)][std::get<1>(update_pos)] = std::get<2>(update_pos);
+  if (update_node.y != -1 && update_node.x != -1)
+    render_maze[update_node.y][update_node.x] = update_node.element;
 }
 
 void MazeView::renderMaze()
@@ -51,7 +52,7 @@ void MazeView::renderMaze()
       ImVec2 cell_min = ImVec2(p.x + x * cell_size, p.y + y * cell_size);
       ImVec2 cell_max = ImVec2(cell_min.x + cell_size, cell_min.y + cell_size);
 
-      if (std::get<0>(update_pos) == y && std::get<1>(update_pos) == x)
+      if (update_node.y == y && update_node.x == x)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(50, 215, 250, 255));
       else if (cell == MazeElement::BEGIN)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(35, 220, 130, 255));

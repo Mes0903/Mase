@@ -68,7 +68,7 @@ void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &m
   view_ptr->setFrameMaze(maze);
 }
 
-void MazeController::enFramequeue(const int32_t y, const int32_t x, const MazeElement element)
+void MazeController::enFramequeue(const MazeNode &node)
 {
-  view_ptr->enFramequeue(y, x, element);
+  view_ptr->enFramequeue(node);
 }

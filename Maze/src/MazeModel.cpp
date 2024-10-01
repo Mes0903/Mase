@@ -1,6 +1,7 @@
 #include "MazeController.h"
 #include "MazeModel.h"
 #include "MazeView.h"
+#include "MazeNode.h"
 
 #include <chrono>
 #include <random>
@@ -59,78 +60,80 @@ void MazeModel::generateMazePrim()
 {
   resetMaze();
 
-  std::vector<std::pair<int32_t, int32_t>> explored_cache;
-  int32_t seed_y{}, seed_x{};
-  setBeginPoint(seed_y, seed_x);
-  explored_cache.emplace_back(std::make_pair(seed_y, seed_x));
+  std::vector<MazeNode> explored_cache;
+  MazeNode seed_node;
+  setBeginPoint(seed_node);
+  explored_cache.emplace_back(seed_node);
 
-  std::vector<std::pair<int32_t, int32_t>> candidate_list;    // 待找的牆的列表
+  std::vector<MazeNode> candidate_list;    // 待找的牆的列表
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   std::shuffle(direction_order.begin(), direction_order.end(), gen);
   for (const int32_t index : direction_order) {
     const auto [dir_y, dir_x] = dir_vec[index];
-    if (inMaze(seed_y, seed_x, dir_y, dir_x))
-      candidate_list.emplace_back(std::make_pair(seed_y + dir_y, seed_x + dir_x));    // 將起點四周在迷宮內的牆加入 candidate_list 列表中
+    if (inMaze(seed_node, dir_y, dir_x))
+      candidate_list.emplace_back(MazeNode{ seed_node.y + dir_y, seed_node.x + dir_x, maze[seed_node.y + dir_y][seed_node.x + dir_x] });    // 將起點四周在迷宮內的牆加入 candidate_list 列表中
   }
 
   while (!candidate_list.empty()) {
     std::uniform_int_distribution<> wall_dis(0, candidate_list.size() - 1);
     int32_t random_index = wall_dis(gen);
-    auto [temp_y, temp_x] = candidate_list[random_index];    // pick one point out
-    MazeElement &current_node = maze[temp_y][temp_x];
-    MazeElement up_node{ MazeElement::INVALID }, down_node{ MazeElement::INVALID }, left_node{ MazeElement::INVALID }, right_node{ MazeElement::INVALID };    // 目前這個牆的上下左右結點
+    MazeNode current_node = candidate_list[random_index];    // pick one point out
+    MazeElement up_element{ MazeElement::INVALID }, down_element{ MazeElement::INVALID }, left_element{ MazeElement::INVALID }, right_element{ MazeElement::INVALID };    // 目前這個牆的上下左右結點
     // 如果抽到的那格確定是牆再去判斷，有時候會有一個牆重複被加到清單裡的情形
-    if (current_node == MazeElement::WALL) {
-      if (inMaze(temp_y, temp_x, -1, 0))
-        up_node = maze[temp_y - 1][temp_x];
-      if (inMaze(temp_y, temp_x, 1, 0))
-        down_node = maze[temp_y + 1][temp_x];
-      if (inMaze(temp_y, temp_x, 0, -1))
-        left_node = maze[temp_y][temp_x - 1];
-      if (inMaze(temp_y, temp_x, 0, 1))
-        right_node = maze[temp_y][temp_x + 1];
+    if (current_node.element == MazeElement::WALL) {
+      if (inMaze(current_node, -1, 0))
+        up_element = maze[current_node.y - 1][current_node.x];
+      if (inMaze(current_node, 1, 0))
+        down_element = maze[current_node.y + 1][current_node.x];
+      if (inMaze(current_node, 0, -1))
+        left_element = maze[current_node.y][current_node.x - 1];
+      if (inMaze(current_node, 0, 1))
+        right_element = maze[current_node.y][current_node.x + 1];
 
       // 如果左右都探索過了，或上下都探索過了，就把這個牆留著，並且加到確定是牆壁的 vector 裡
-      if ((up_node == MazeElement::EXPLORED && down_node == MazeElement::EXPLORED) || (left_node == MazeElement::EXPLORED && right_node == MazeElement::EXPLORED)) {
+      if ((up_element == MazeElement::EXPLORED && down_element == MazeElement::EXPLORED) || (left_element == MazeElement::EXPLORED && right_element == MazeElement::EXPLORED)) {
         candidate_list.erase(candidate_list.begin() + random_index);    // 如果「上下都走過」或「左右都走過」，那麼就把這個牆留著
       }
       else {
         // 不然就把牆打通
-        current_node = MazeElement::EXPLORED;
-        explored_cache.emplace_back(std::make_pair(temp_y, temp_x));
+        current_node.element = MazeElement::EXPLORED;
+        maze[current_node.y][current_node.x] = MazeElement::EXPLORED;
+        explored_cache.emplace_back(current_node);
         candidate_list.erase(candidate_list.begin() + random_index);
 
-        controller_ptr->enFramequeue(temp_y, temp_x, MazeElement::EXPLORED);
+        controller_ptr->enFramequeue(current_node);
 
-        if (up_node == MazeElement::EXPLORED && down_node == MazeElement::GROUND)    // 上面探索過，下面還沒
-          ++temp_y;    // 將目前的節點改成牆壁 "下面" 那個節點
-        else if (up_node == MazeElement::GROUND && down_node == MazeElement::EXPLORED)    // 下面探索過，上面還沒
-          --temp_y;    // 將目前的節點改成牆壁 "上面" 那個節點
-        else if (left_node == MazeElement::EXPLORED && right_node == MazeElement::GROUND)    // 左邊探索過，右邊還沒
-          ++temp_x;    // 將目前的節點改成牆壁 "右邊" 那個節點
-        else if (left_node == MazeElement::GROUND && right_node == MazeElement::EXPLORED)    // 右邊探索過，左邊還沒
-          --temp_x;    // 將目前的節點改成牆壁 "左邊" 那個節點
+        if (up_element == MazeElement::EXPLORED && down_element == MazeElement::GROUND)    // 上面探索過，下面還沒
+          ++current_node.y;    // 將目前的節點改成牆壁 "下面" 那個節點
+        else if (up_element == MazeElement::GROUND && down_element == MazeElement::EXPLORED)    // 下面探索過，上面還沒
+          --current_node.y;    // 將目前的節點改成牆壁 "上面" 那個節點
+        else if (left_element == MazeElement::EXPLORED && right_element == MazeElement::GROUND)    // 左邊探索過，右邊還沒
+          ++current_node.x;    // 將目前的節點改成牆壁 "右邊" 那個節點
+        else if (left_element == MazeElement::GROUND && right_element == MazeElement::EXPLORED)    // 右邊探索過，左邊還沒
+          --current_node.x;    // 將目前的節點改成牆壁 "左邊" 那個節點
 
-        maze[temp_y][temp_x] = MazeElement::EXPLORED;    // 將現在的節點(牆壁上下左右其中一個，看哪個方向符合條件) 改為 EXPLORED
-        explored_cache.emplace_back(std::make_pair(temp_y, temp_x));    // 將這個節點的座標記起來，等等要改回 GROUND
+        current_node.element = MazeElement::EXPLORED;
+        maze[current_node.y][current_node.x] = MazeElement::EXPLORED;    // 將現在的節點(牆壁上下左右其中一個，看哪個方向符合條件) 改為 EXPLORED
+        explored_cache.emplace_back(current_node);    // 將這個節點的座標記起來，等等要改回 GROUND
         std::shuffle(direction_order.begin(), direction_order.end(), gen);
         for (const int32_t index : direction_order) {    //(新的點的)上下左右遍歷
           const auto [dir_y, dir_x] = dir_vec[index];
-          if (inMaze(temp_y, temp_x, dir_y, dir_x)) {    // 如果上(下左右)的牆在迷宮內
-            if (maze[temp_y + dir_y][temp_x + dir_x] == MazeElement::WALL)    // 而且如果這個節點是牆
-              candidate_list.emplace_back(std::make_pair(temp_y + dir_y, temp_x + dir_x));    // 就將這個節點加入wall列表中
+          if (inMaze(current_node, dir_y, dir_x)) {    // 如果上(下左右)的牆在迷宮內
+            if (maze[current_node.y + dir_y][current_node.x + dir_x] == MazeElement::WALL)    // 而且如果這個節點是牆
+              candidate_list.emplace_back(MazeNode{ current_node.y + dir_y, current_node.x + dir_x, maze[current_node.y + dir_y][current_node.x + dir_x] });    // 就將這個節點加入wall列表中
           }
         }
 
-        controller_ptr->enFramequeue(temp_y, temp_x, MazeElement::EXPLORED);
+        controller_ptr->enFramequeue(current_node);
       }
-    }    // end if(current_node == MazeElement::WALL)
+    }    // end if(current_node.element == MazeElement::WALL)
   }    // end while ( !candidate_list.empty() )
 
-  for (const auto [temp_y, temp_x] : explored_cache) {    // 把剛剛探索過的點換成 GROUND ，因為我們在生成地圖
-    maze[temp_y][temp_x] = MazeElement::GROUND;
-    controller_ptr->enFramequeue(temp_y, temp_x, MazeElement::GROUND);
+  for (MazeNode &current_node : explored_cache) {    // 把剛剛探索過的點換成 GROUND ，因為我們在生成地圖
+    current_node.element = MazeElement::GROUND;
+    maze[current_node.y][current_node.x] = MazeElement::GROUND;
+    controller_ptr->enFramequeue(current_node);
   }
 
   setFlag();
@@ -140,42 +143,51 @@ void MazeModel::generateMazeRecursionBacktracker()
 {
   resetMaze();
 
-  std::stack<std::pair<int32_t, int32_t>> explored_cache;    // 之後要改回道路的座標清單
-  int32_t seed_y{}, seed_x{};    // 一開始 x,y 座標
-  setBeginPoint(seed_y, seed_x);
-  explored_cache.emplace(std::make_pair(seed_y, seed_x));
+  std::stack<MazeNode> explored_cache;    // 之後要改回道路的座標清單
+  MazeNode seed_node;
+  setBeginPoint(seed_node);
+  explored_cache.emplace(seed_node);
 
-  std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
-  std::stack<std::pair<int32_t, int32_t>> candidate_list;
+  std::stack<MazeNode> candidate_list;
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
+  std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
   std::shuffle(direction_order.begin(), direction_order.end(), gen);
   for (const int32_t index : direction_order) {
     const auto [dir_y, dir_x] = dir_vec[index];
-    if (inMaze(seed_y, seed_x, 2 * dir_y, 2 * dir_x))
-      candidate_list.emplace(std::make_pair(seed_y + 2 * dir_y, seed_x + 2 * dir_x));
+    if (inMaze(seed_node, 2 * dir_y, 2 * dir_x))
+      candidate_list.emplace(MazeNode{ seed_node.y + 2 * dir_y, seed_node.x + 2 * dir_x, MazeElement::INVALID });
   }
 
-  std::pair<int32_t, int32_t> current_point{ seed_y, seed_x };
+  MazeNode current_element{ seed_node };
   while (!candidate_list.empty()) {
-    std::pair<int32_t, int32_t> temp_point = candidate_list.top();
+    MazeNode current_node = candidate_list.top();
     candidate_list.pop();
 
-    if (maze[temp_point.first][temp_point.second] == MazeElement::GROUND) {
-      int32_t dir_y = (temp_point.first - current_point.first) / 2;
-      int32_t dir_x = (temp_point.second - current_point.second) / 2;
-      maze[current_point.first + dir_y][current_point.second + dir_x] = MazeElement::EXPLORED;    // middle point
-      maze[temp_point.first][temp_point.second] = MazeElement::EXPLORED;    // current point
-      explored_cache.emplace(current_point);
-      explored_cache.emplace(temp_point);
+    if (maze[current_node.y][current_node.x] == MazeElement::GROUND) {
+      int32_t dir_y = (current_node.y - current_element.y) / 2;
+      int32_t dir_x = (current_node.x - current_element.x) / 2;
+      maze[current_element.y + dir_y][current_element.x + dir_x] = MazeElement::EXPLORED;    // middle point
+      maze[current_node.y][current_node.x] = MazeElement::EXPLORED;    // current point
+      explored_cache.emplace(current_element);
+      controller_ptr->enFramequeue(current_element);
+      explored_cache.emplace(current_node);
+      controller_ptr->enFramequeue(current_node);
+
+      std::shuffle(direction_order.begin(), direction_order.end(), gen);
+      for (const int32_t index : direction_order) {
+        const auto [dir_y, dir_x] = dir_vec[index];
+        if (inMaze(current_node, 2 * dir_y, 2 * dir_x))
+          candidate_list.emplace(MazeNode{ current_node.y + 2 * dir_y, current_node.x + 2 * dir_x, MazeElement::INVALID });
+      }
     }
   }
 
   while (!explored_cache.empty()) {
-    auto [temp_y, temp_x] = explored_cache.top();
+    MazeNode current_node = explored_cache.top();
     explored_cache.pop();
-    maze[temp_y][temp_x] = MazeElement::GROUND;
-    controller_ptr->enFramequeue(temp_y, temp_x, MazeElement::GROUND);
+    maze[current_node.y][current_node.x] = MazeElement::GROUND;
+    controller_ptr->enFramequeue(current_node);
   }
 
   setFlag();
@@ -187,7 +199,7 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   int32_t width = rx - lx + 1, height = dy - uy + 1;
   if (width < 2 && height < 2) return;
-  if (!inMaze(uy, lx, height - 1, width - 1))
+  if (!inMaze(MazeNode{ uy, lx, MazeElement::INVALID }, height - 1, width - 1))
     return;
 
   bool is_horizontal = (width <= height) ? true : false;
@@ -477,14 +489,14 @@ void MazeModel::setFlag()
 {
   maze[BEGIN_Y][BEGIN_X] = MazeElement::BEGIN;
   maze[END_Y][END_X] = MazeElement::END;
-  controller_ptr->enFramequeue(BEGIN_Y, BEGIN_X, MazeElement::BEGIN);
-  controller_ptr->enFramequeue(END_Y, END_X, MazeElement::END);
-  controller_ptr->enFramequeue(-1, -1, MazeElement::INVALID);
+  controller_ptr->enFramequeue(MazeNode{ BEGIN_Y, BEGIN_X, MazeElement::BEGIN });
+  controller_ptr->enFramequeue(MazeNode{ END_Y, END_X, MazeElement::END });
+  controller_ptr->enFramequeue(MazeNode{ -1, -1, MazeElement::INVALID });
 }
 
-bool MazeModel::inMaze(const int32_t y, const int32_t x, const int32_t delta_y, const int32_t delta_x)
+bool MazeModel::inMaze(const MazeNode &node, const int32_t delta_y, const int32_t delta_x)
 {
-  return (y + delta_y < MAZE_HEIGHT - 1) && (x + delta_x < MAZE_WIDTH - 1) && (y + delta_y > 0) && (x + delta_x > 0);    // 下牆、右牆、上牆、左牆
+  return (node.y + delta_y < MAZE_HEIGHT - 1) && (node.x + delta_x < MAZE_WIDTH - 1) && (node.y + delta_y > 0) && (node.x + delta_x > 0);    // 下牆、右牆、上牆、左牆
 }
 
 /**
@@ -493,18 +505,18 @@ bool MazeModel::inMaze(const int32_t y, const int32_t x, const int32_t delta_y, 
  * @param seed_y
  * @param seed_x
  */
-void MazeModel::setBeginPoint(int32_t &seed_y, int32_t &seed_x)
+void MazeModel::setBeginPoint(MazeNode &node)
 {
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
   std::uniform_int_distribution<> y_dis(0, (MAZE_HEIGHT - 3) / 2);
   std::uniform_int_distribution<> x_dis(0, (MAZE_WIDTH - 3) / 2);
 
-  seed_y = 2 * y_dis(gen) + 1;
-  seed_x = 2 * x_dis(gen) + 1;
+  node.y = 2 * y_dis(gen) + 1;
+  node.x = 2 * x_dis(gen) + 1;
+  node.element = MazeElement::EXPLORED;
+  maze[node.y][node.x] = MazeElement::EXPLORED;    // Set the randomly chosen point as the generation start point
 
-  maze[seed_y][seed_x] = MazeElement::EXPLORED;    // Set the randomly chosen point as the generation start point
-  controller_ptr->enFramequeue(seed_y, seed_x, MazeElement::EXPLORED);
+  controller_ptr->enFramequeue(node);
 }    // end setBeginPoint
 
 bool MazeModel::is_in_maze(const int32_t y, const int32_t x)

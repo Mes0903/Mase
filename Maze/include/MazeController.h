@@ -11,11 +11,15 @@
 
 #include "MazeModel.h"
 #include "MazeView.h"
+#include "MazeNode.h"
 
 #include <memory>
+#include <mutex>
 
 class MazeModel;
 class MazeView;
+struct MazeNode;
+enum class MazeAction;
 
 class MazeController {
 public:
@@ -23,7 +27,7 @@ public:
 
   void handleInput(const MazeAction action);
   void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
-  void enFramequeue(const int32_t y, const int32_t x, const MazeElement element);
+  void enFramequeue(const MazeNode &node);
 
 public:
   std::mutex g_mutex;
