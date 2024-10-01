@@ -1,6 +1,3 @@
-#include "imgui.h"
-#include "imgui_internal.h"
-
 #include "MazeController.h"
 #include "MazeModel.h"
 #include "MazeView.h"
