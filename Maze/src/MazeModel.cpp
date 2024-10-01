@@ -11,6 +11,7 @@
 #include <array>
 #include <utility>
 #include <memory>
+#include <iostream>
 
 MazeModel::MazeModel(uint32_t height, uint32_t width)
     : maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } } {}
@@ -146,54 +147,64 @@ void MazeModel::generateMazeRecursionBacktracker()
 {
   resetMaze();
 
-  std::stack<MazeNode> explored_cache;    // 之後要改回道路的座標清單
-  MazeNode seed_node;
-  setBeginPoint(seed_node);
-  explored_cache.emplace(seed_node);
+  struct TraceNode {
+    MazeNode node;
+    int8_t index = 0;
+    std::array<uint8_t, 4> direction_order = { 0, 1, 2, 3 };
+  };
 
-  std::stack<MazeNode> candidate_list;
-  std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-  std::shuffle(direction_order.begin(), direction_order.end(), gen);
-  for (const int32_t index : direction_order) {
-    const auto [dir_y, dir_x] = dir_vec[index];
-    if (inMaze(seed_node, 2 * dir_y, 2 * dir_x))
-      candidate_list.emplace(MazeNode{ seed_node.y + 2 * dir_y, seed_node.x + 2 * dir_x, maze[seed_node.y + dir_y][seed_node.x + dir_x] });
+  std::stack<TraceNode> explored_cache;    // 之後要改回道路的座標清單
+  std::stack<TraceNode> candidate_list;
+
+  {
+    TraceNode seed_node;
+    std::shuffle(seed_node.direction_order.begin(), seed_node.direction_order.end(), gen);
+    setBeginPoint(seed_node.node);
+    candidate_list.push(seed_node);
+    explored_cache.push(seed_node);
   }
 
-  MazeNode current_element{ seed_node };
   while (!candidate_list.empty()) {
-    MazeNode current_node = candidate_list.top();
-    candidate_list.pop();
+    TraceNode &current_node = candidate_list.top();
+    if (current_node.index == 4) {
+      candidate_list.pop();
+      continue;
+    }
 
-    if (maze[current_node.y][current_node.x] == MazeElement::GROUND) {
-      int32_t dir_y = (current_node.y - current_element.y) / 2;
-      int32_t dir_x = (current_node.x - current_element.x) / 2;
-      maze[current_element.y + dir_y][current_element.x + dir_x] = MazeElement::EXPLORED;    // middle point
-      maze[current_node.y][current_node.x] = MazeElement::EXPLORED;    // current point
-      explored_cache.emplace(current_element);
-      controller_ptr->enFramequeue(current_element);
-      explored_cache.emplace(current_node);
-      controller_ptr->enFramequeue(current_node);
+    int8_t dir = current_node.direction_order[current_node.index++];
+    const auto [dir_y, dir_x] = dir_vec[dir];
 
-      std::shuffle(direction_order.begin(), direction_order.end(), gen);
-      for (const int32_t index : direction_order) {
-        const auto [dir_y, dir_x] = dir_vec[index];
-        if (inMaze(current_node, 2 * dir_y, 2 * dir_x))
-          candidate_list.emplace(MazeNode{ current_node.y + 2 * dir_y, current_node.x + 2 * dir_x, MazeElement::INVALID });
-      }
+    if (!inMaze(current_node.node, 2 * dir_y, 2 * dir_x))
+      continue;
+
+    if (maze[current_node.node.y + 2 * dir_y][current_node.node.x + 2 * dir_x] == MazeElement::GROUND) {
+      TraceNode target_node{ { current_node.node.y + 2 * dir_y, current_node.node.x + 2 * dir_x, MazeElement::GROUND }, 0, { 0, 1, 2, 3 } };
+      std::shuffle(target_node.direction_order.begin(), target_node.direction_order.end(), gen);
+
+      current_node.node.element = MazeElement::EXPLORED;
+      maze[current_node.node.y + dir_y][current_node.node.x + dir_x] = MazeElement::EXPLORED;
+      controller_ptr->enFramequeue(MazeNode{ current_node.node.y + dir_y, current_node.node.x + dir_x, MazeElement::EXPLORED });
+      explored_cache.emplace(TraceNode{ { current_node.node.y + dir_y, current_node.node.x + dir_x, MazeElement::EXPLORED }, 0, { 0, 1, 2, 3 } });
+
+      target_node.node.element = MazeElement::EXPLORED;
+      maze[target_node.node.y][target_node.node.x] = MazeElement::EXPLORED;
+      controller_ptr->enFramequeue(target_node.node);
+      explored_cache.push(target_node);
+
+      candidate_list.push(target_node);
     }
   }
 
   while (!explored_cache.empty()) {
-    MazeNode current_node = explored_cache.top();
+    TraceNode &current_node = explored_cache.top();
+    current_node.node.element = MazeElement::GROUND;
+    maze[current_node.node.y][current_node.node.x] = MazeElement::GROUND;
+    controller_ptr->enFramequeue(current_node.node);
     explored_cache.pop();
-    maze[current_node.y][current_node.x] = MazeElement::GROUND;
-    controller_ptr->enFramequeue(current_node);
   }
 
   setFlag();
-
 }    // end generateMazeRecursionBacktracker()
 
 void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx)
@@ -325,7 +336,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
     break;
   }
 
-  result.emplace(Node(weight, BEGIN_Y, BEGIN_Y));    // 將起點加進去
+  result.push(Node(weight, BEGIN_Y, BEGIN_Y));    // 將起點加進去
 
   while (true) {
     if (result.empty())
@@ -363,7 +374,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
               weight = (static_cast<int32_t>(y / interval_y) < static_cast<int32_t>(x / interval_x)) ? (10 - static_cast<int32_t>(y / interval_y)) : (10 - static_cast<int32_t>(x / interval_x));    // 權重為區間
               break;
             }
-            result.emplace(Node(temp.__Weight + weight, y, x));    // 加入節點
+            result.push(Node(temp.__Weight + weight, y, x));    // 加入節點
           }
         }
       }    // end for
@@ -383,7 +394,7 @@ void MazeModel::solveMazeGreedy()
   };
 
   std::priority_queue<Node, std::vector<Node>, std::greater<Node>> result;    // 待走的結點，greater代表小的會在前面，由小排到大
-  result.emplace(Node(pow_two_norm(BEGIN_Y, BEGIN_X), BEGIN_Y, BEGIN_X));    // 將起點加進去
+  result.push(Node(pow_two_norm(BEGIN_Y, BEGIN_X), BEGIN_Y, BEGIN_X));    // 將起點加進去
 
   while (true) {
     if (result.empty())
@@ -408,7 +419,7 @@ void MazeModel::solveMazeGreedy()
 
         if (is_in_maze(y, x)) {
           if (maze[y][x] == MazeElement::GROUND)    // 如果這個結點還沒走過，就把他加到待走的結點裡
-            result.emplace(Node(pow_two_norm(y, x), y, x));
+            result.push(Node(pow_two_norm(y, x), y, x));
         }
       }
     }
@@ -444,7 +455,7 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
     cost = (static_cast<int32_t>(BEGIN_Y / interval_y) < static_cast<int32_t>(BEGIN_X / interval_x)) ? (10 - static_cast<int32_t>(BEGIN_Y / interval_y)) * 8 : (10 - static_cast<int32_t>(BEGIN_X / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
     weight = cost + pow_two_norm(BEGIN_Y, BEGIN_X);    // 權重以區間(Cost) + Two_Norm 計算
   }
-  result.emplace(Node(cost, weight, BEGIN_Y, BEGIN_X));    // 將起點加進去
+  result.push(Node(cost, weight, BEGIN_Y, BEGIN_X));    // 將起點加進去
 
   while (true) {
     if (result.empty())
@@ -477,7 +488,7 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
               cost = (static_cast<int32_t>(y / interval_y) < static_cast<int32_t>(x / interval_x)) ? temp.__Cost + (10 - static_cast<int32_t>(y / interval_y)) * 8 : temp.__Cost + (10 - static_cast<int32_t>(x / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
               weight = cost + pow_two_norm(y, x);    // heuristic function 設為 two_norm 平方
             }
-            result.emplace(Node(cost, weight, y, x));
+            result.push(Node(cost, weight, y, x));
           }
         }
       }
