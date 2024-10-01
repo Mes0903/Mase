@@ -114,6 +114,7 @@ void MazeModel::generateMazePrim()
 
         maze[temp_y][temp_x] = MazeElement::EXPLORED;    // 將現在的節點(牆壁上下左右其中一個，看哪個方向符合條件) 改為 EXPLORED
         explored_cache.emplace_back(std::make_pair(temp_y, temp_x));    // 將這個節點的座標記起來，等等要改回 GROUND
+        std::shuffle(direction_order.begin(), direction_order.end(), gen);
         for (const int32_t index : direction_order) {    //(新的點的)上下左右遍歷
           const auto [dir_y, dir_x] = dir_vec[index];
           if (inMaze(temp_y, temp_x, dir_y, dir_x)) {    // 如果上(下左右)的牆在迷宮內
@@ -137,56 +138,47 @@ void MazeModel::generateMazePrim()
 
 void MazeModel::generateMazeRecursionBacktracker()
 {
-  std::vector<std::pair<int32_t, int32_t>> explored_cache;    // 之後要改回道路的座標清單
+  resetMaze();
+
+  std::stack<std::pair<int32_t, int32_t>> explored_cache;    // 之後要改回道路的座標清單
   int32_t seed_y{}, seed_x{};    // 一開始 x,y 座標
   setBeginPoint(seed_y, seed_x);
+  explored_cache.emplace(std::make_pair(seed_y, seed_x));
+
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
-  struct Node {
-    int32_t y, x, current_index;
-    std::vector<int32_t> walking_order{ 0, 1, 2, 3 };
-    Node(int32_t __y, int32_t __x, int32_t __current_index, std::mt19937 &gen) : y(__y), x(__x), current_index(__current_index)
-    {
-      std::shuffle(walking_order.begin(), walking_order.end(), gen);
-    };
-  };
-  std::stack<Node> Walking_List;
-  Node first_node(seed_y, seed_x, 0, gen);
-  Walking_List.emplace(first_node);
+  std::stack<std::pair<int32_t, int32_t>> candidate_list;
+  std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
+  std::shuffle(direction_order.begin(), direction_order.end(), gen);
+  for (const int32_t index : direction_order) {
+    const auto [dir_y, dir_x] = dir_vec[index];
+    if (inMaze(seed_y, seed_x, 2 * dir_y, 2 * dir_x))
+      candidate_list.emplace(std::make_pair(seed_y + 2 * dir_y, seed_x + 2 * dir_x));
+  }
 
-  while (!Walking_List.empty()) {
-    Node temp = Walking_List.top();
-    int32_t &Index = Walking_List.top().walking_order[Walking_List.top().current_index];
-    const auto [dir_y, dir_x] = dir_vec[Index];
-    if (inMaze(temp.y, temp.x, 2 * dir_y, 2 * dir_x)) {
-      if (maze[temp.y + 2 * dir_y][temp.x + 2 * dir_x] == MazeElement::GROUND) {
-        ++Walking_List.top().current_index;
-        if (Walking_List.top().current_index > 3)
-          Walking_List.pop();
-        Walking_List.emplace(Node(temp.y + 2 * dir_y, temp.x + 2 * dir_x, 0, gen));
+  std::pair<int32_t, int32_t> current_point{ seed_y, seed_x };
+  while (!candidate_list.empty()) {
+    std::pair<int32_t, int32_t> temp_point = candidate_list.top();
+    candidate_list.pop();
 
-        maze[temp.y + dir_y][temp.x + dir_x] = MazeElement::EXPLORED;
-        explored_cache.emplace_back(std::make_pair(temp.y + dir_y, temp.x + dir_x));
-
-        maze[temp.y + 2 * dir_y][temp.x + 2 * dir_x] = MazeElement::EXPLORED;
-        explored_cache.emplace_back(std::make_pair(temp.y + 2 * dir_y, temp.x + 2 * dir_x));
-      }
-      else {
-        ++Walking_List.top().current_index;
-        if (Walking_List.top().current_index > 3)
-          Walking_List.pop();
-      }
-    }
-    else {
-      ++Walking_List.top().current_index;
-      if (Walking_List.top().current_index > 3)
-        Walking_List.pop();
+    if (maze[temp_point.first][temp_point.second] == MazeElement::GROUND) {
+      int32_t dir_y = (temp_point.first - current_point.first) / 2;
+      int32_t dir_x = (temp_point.second - current_point.second) / 2;
+      maze[current_point.first + dir_y][current_point.second + dir_x] = MazeElement::EXPLORED;    // middle point
+      maze[temp_point.first][temp_point.second] = MazeElement::EXPLORED;    // current point
+      explored_cache.emplace(current_point);
+      explored_cache.emplace(temp_point);
     }
   }
 
-  for (const auto &[temp_y, temp_x] : explored_cache) {    // 把剛剛探索過的點換成 GROUND ，因為我們在生成地圖
+  while (!explored_cache.empty()) {
+    auto [temp_y, temp_x] = explored_cache.top();
+    explored_cache.pop();
     maze[temp_y][temp_x] = MazeElement::GROUND;
+    controller_ptr->enFramequeue(temp_y, temp_x, MazeElement::GROUND);
   }
+
+  setFlag();
 
 }    // end generateMazeRecursionBacktracker()
 
