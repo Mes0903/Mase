@@ -15,7 +15,7 @@
 #include "MazeNode.h"
 
 MazeView::MazeView(uint32_t height, uint32_t width)
-    : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag{ false } {}
+    : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag{ false }, renderer{} {}
 
 void MazeView::setController(MazeController *controller_ptr)
 {
@@ -54,7 +54,6 @@ void MazeView::renderMaze()
   ImDrawList *draw_list = ImGui::GetWindowDrawList();
   const ImVec2 p = ImGui::GetCursorScreenPos();
   const float cell_size = 15.0f;
-
 
   std::lock_guard<std::mutex> lock(maze_mutex);
   for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
@@ -114,28 +113,13 @@ void MazeView::renderGUI()
   ImGui::End();
 }
 
-void MazeView::render(GLFWwindow *window)
+void MazeView::render()
 {
-  // render loop
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+  while (!glfwWindowShouldClose(renderer.window)) {
+    renderer.newFrame();
 
     renderGUI();
 
-    // Rendering
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    glfwSwapBuffers(window);
+    renderer.render();
   }
 }

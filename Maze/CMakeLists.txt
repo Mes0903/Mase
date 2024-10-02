@@ -5,6 +5,7 @@ add_library(
   ${MAZE_DIR}/src/MazeController.cpp
   ${MAZE_DIR}/src/MazeModel.cpp
   ${MAZE_DIR}/src/MazeView.cpp
+  ${MAZE_DIR}/src/MazeRenderer.cpp
 )
 
 target_include_directories(
