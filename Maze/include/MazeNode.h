@@ -11,13 +11,13 @@
 
 #include <cstdint>
 
-enum class MazeElement : int32_t {
+enum class MazeElement : int8_t {
   INVALID = -1,
   WALL = 0,
-  GROUND = 1,
-  EXPLORED = 2,
-  BEGIN = 9,
-  END = 10,
+  GROUND,
+  EXPLORED,
+  BEGIN,
+  END,
 };
 
 struct MazeNode {
