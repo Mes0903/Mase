@@ -16,8 +16,13 @@ void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 
 void MazeController::handleInput(const MazeAction actions)
 {
-  std::thread t1;
+  if (!isModelComplete() || !isViewComplete())
+    return;
 
+  model_complete_flag__.store(false);
+  view_complete_flag__.store(false);
+
+  std::thread t1;
   switch (actions) {
   case MazeAction::G_CLEANALL:
     model_ptr__->emptyMap();
@@ -67,8 +72,6 @@ void MazeController::handleInput(const MazeAction actions)
     std::clog << "invalid action" << std::endl;
     break;
   }
-
-  model_complete_flag.store(false);
 }
 
 void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
@@ -83,9 +86,18 @@ void MazeController::enFramequeue(const MazeNode &node)
 
 void MazeController::setModelComplete()
 {
-  model_complete_flag.store(true);
+  model_complete_flag__.store(true);
 }
 bool MazeController::isModelComplete() const
 {
-  return model_complete_flag.load();
+  return model_complete_flag__.load();
+}
+
+void MazeController::setViewComplete()
+{
+  view_complete_flag__.store(true);
+}
+bool MazeController::isViewComplete() const
+{
+  return view_complete_flag__.load();
 }

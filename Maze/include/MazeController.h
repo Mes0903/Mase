@@ -31,10 +31,13 @@ public:
   void setModelComplete();
   bool isModelComplete() const;
 
-public:
-  std::atomic<bool> model_complete_flag{ false };
+  void setViewComplete();
+  bool isViewComplete() const;
 
 private:
+  std::atomic<bool> model_complete_flag__ = true;
+  std::atomic<bool> view_complete_flag__ = true;
+
   MazeModel *model_ptr__;
   MazeView *view_ptr__;
 };

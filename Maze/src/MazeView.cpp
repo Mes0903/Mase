@@ -44,6 +44,7 @@ void MazeView::deFramequeue__()
   }
   else if (controller_ptr__->isModelComplete()) {
     controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORER);
+    controller_ptr__->setViewComplete();
   }
 }
 
