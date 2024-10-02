@@ -1,9 +1,4 @@
 #include "imgui.h"
-#include "MazeController.h"
-#include "MazeModel.h"
-#include "MazeView.h"
-#include "MazeNode.h"
-
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
@@ -14,43 +9,45 @@
 #endif
 #include <GLFW/glfw3.h>
 
+#include "MazeController.h"
+#include "MazeModel.h"
+#include "MazeView.h"
+#include "MazeNode.h"
+
 MazeView::MazeView(uint32_t height, uint32_t width)
     : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag{ false } {}
 
-void MazeView::setController(MazeController* controller_ptr) {
-    this->controller_ptr = controller_ptr; 
+void MazeView::setController(MazeController *controller_ptr)
+{
+  this->controller_ptr = controller_ptr;
 }
 
 void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
 {
-    std::lock_guard<std::mutex> lock(maze_mutex);  
-    render_maze = maze;
+  std::lock_guard<std::mutex> lock(maze_mutex);
+  render_maze = maze;
 }
-
 
 void MazeView::enFramequeue(const MazeNode &node)
 {
   MazeDiffQueue.enqueue(node);
 }
 
+void MazeView::deFramequeue()
+{
+  std::optional<MazeNode> opt_node = MazeDiffQueue.dequeue();
+  if (opt_node.has_value()) {
+    update_node = *opt_node;
 
-
-void MazeView::deFramequeue() {
-    std::optional<MazeNode> opt_node = MazeDiffQueue.dequeue();
-    if (opt_node.has_value()) {
-        update_node = *opt_node;
-
-        if (update_node.y != -1 && update_node.x != -1) {
-            std::lock_guard<std::mutex> lock(maze_mutex);
-            render_maze[update_node.y][update_node.x] = update_node.element;
-        }
-    } else if (controller_ptr->isModelComplete()) {
-        controller_ptr->handleInput(MazeAction::G_RESET);
+    if (update_node.y != -1 && update_node.x != -1) {
+      std::lock_guard<std::mutex> lock(maze_mutex);
+      render_maze[update_node.y][update_node.x] = update_node.element;
     }
+  }
+  else if (controller_ptr->isModelComplete()) {
+    controller_ptr->handleInput(MazeAction::G_RESET);
+  }
 }
-
-
-
 
 void MazeView::renderMaze()
 {
@@ -117,8 +114,9 @@ void MazeView::renderGUI()
   ImGui::End();
 }
 
-void MazeView::render(GLFWwindow *window){
-    // render loop
+void MazeView::render(GLFWwindow *window)
+{
+  // render loop
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();

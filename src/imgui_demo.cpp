@@ -36,7 +36,7 @@ int main(int, char **)
   if (!glfwInit())
     return 1;
 
-  // Decide GL+GLSL versions
+    // Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
   // GL ES 2.0 + GLSL 100
   const char *glsl_version = "#version 100";
@@ -70,7 +70,7 @@ int main(int, char **)
   ImGui::CreateContext();
   ImPlot::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
-  (void)io;
+  (void) io;
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
@@ -79,7 +79,7 @@ int main(int, char **)
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+  if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
     throw std::runtime_error("Failed to initialize GLAD");
 
   MazeModel model(MAZE_HEIGHT, MAZE_WIDTH);

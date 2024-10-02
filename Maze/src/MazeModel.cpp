@@ -16,10 +16,10 @@
 MazeModel::MazeModel(uint32_t height, uint32_t width)
     : maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } } {}
 
-void MazeModel::setController(MazeController* controller_ptr) {
-    this->controller_ptr = controller_ptr;  
+void MazeModel::setController(MazeController *controller_ptr)
+{
+  this->controller_ptr = controller_ptr;
 }
-
 
 void MazeModel::emptyMap()
 {
@@ -129,17 +129,14 @@ void MazeModel::generateMazePrim()
 
         controller_ptr->enFramequeue(current_node);
       }
-    }   
-  }    
-  
+    }
+  }
+
   controller_ptr->setModelComplete();
-
-
 }    // end generateMazePrim()
 
 void MazeModel::generateMazeRecursionBacktracker()
 {
-
   struct TraceNode {
     MazeNode node;
     int8_t index = 0;
@@ -190,7 +187,6 @@ void MazeModel::generateMazeRecursionBacktracker()
   }
 
   controller_ptr->setModelComplete();
-
 }    // end generateMazeRecursionBacktracker()
 
 void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx)

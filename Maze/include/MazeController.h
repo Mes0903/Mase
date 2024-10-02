@@ -21,26 +21,25 @@ class MazeView;
 struct MazeNode;
 enum class MazeAction;
 
-class MazeController{
+class MazeController {
 public:
-  void setModelView(MazeModel* model_ptr, MazeView* view_ptr);
+  void setModelView(MazeModel *model_ptr, MazeView *view_ptr);
 
   void handleInput(const MazeAction action);
-  void setFrameMaze(const std::vector<std::vector<MazeElement>>& maze);
-  void enFramequeue(const MazeNode& node);
+  void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
+  void enFramequeue(const MazeNode &node);
 
-  void setModelComplete(); 
-  bool isModelComplete() const; 
+  void setModelComplete();
+  bool isModelComplete() const;
 
   void InitMaze();
 
 public:
-  std::atomic<bool> model_complete_flag{false};
-
+  std::atomic<bool> model_complete_flag{ false };
 
 private:
-  MazeModel* model_ptr;  
-  MazeView* view_ptr;
+  MazeModel *model_ptr;
+  MazeView *view_ptr;
 };
 
 #endif

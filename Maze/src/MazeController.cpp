@@ -5,9 +5,9 @@
 #include <iostream>
 #include <thread>
 
-void MazeController::setModelView(MazeModel* model_ptr, MazeView* view_ptr)
+void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 {
-  this->model_ptr = model_ptr; 
+  this->model_ptr = model_ptr;
   this->view_ptr = view_ptr;
 
   this->model_ptr->setController(this);
@@ -64,23 +64,26 @@ void MazeController::handleInput(const MazeAction actions)
   }
 }
 
-void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>>& maze)
+void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
 {
   view_ptr->setFrameMaze(maze);
 }
 
-void MazeController::enFramequeue(const MazeNode& node)
+void MazeController::enFramequeue(const MazeNode &node)
 {
   view_ptr->enFramequeue(node);
 }
 
-void MazeController::setModelComplete() {
-    model_complete_flag.store(true);  
+void MazeController::setModelComplete()
+{
+  model_complete_flag.store(true);
 }
-bool MazeController::isModelComplete() const {
-    return model_complete_flag.load();  
+bool MazeController::isModelComplete() const
+{
+  return model_complete_flag.load();
 }
 
-void MazeController::InitMaze(){
+void MazeController::InitMaze()
+{
   model_ptr->resetMaze();
 }
