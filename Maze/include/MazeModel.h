@@ -68,11 +68,11 @@ public:
   std::vector<std::vector<MazeElement>> maze;
 
 private:
-  std::unique_ptr<MazeController> controller_ptr;
+  MazeController *controller_ptr;
 
 private:
-  void setFlag();
   bool inMaze(const MazeNode &node, const int32_t delta_y, const int32_t delta_x);
+  void setFlag();
 
   void setBeginPoint(MazeNode &node);
   bool is_in_maze(const int32_t y, const int32_t x);

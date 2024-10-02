@@ -55,8 +55,6 @@ int main(int, char **)
   const char *glsl_version = "#version 130";
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-  // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+
-  // only glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // 3.0+ only
 #endif
 
   // Create window with graphics context
@@ -73,21 +71,13 @@ int main(int, char **)
   ImPlot::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
   (void) io;
-  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable
-  // Keyboard Controls io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; //
-  // Enable Gamepad Controls
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
-  // ImGui::StyleColorsLight();
 
   // Setup Platform/Renderer backends
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
-
-  bool show_demo_window = true;
-  bool show_another_window = false;
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
     throw std::runtime_error("Failed to initialize GLAD");
@@ -97,30 +87,9 @@ int main(int, char **)
   MazeController controller;
 
   controller.setModelView(&model, &view);
-  view.setController(&controller);
-  model.setController(&controller);
+  controller.InitMaze();
 
-  // Main loop
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    view.renderGUI();
-
-    // Rendering
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    glfwSwapBuffers(window);
-  }
+  view.render(window);
 
   // Cleanup
   ImGui_ImplOpenGL3_Shutdown();
