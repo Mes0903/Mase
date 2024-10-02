@@ -23,26 +23,26 @@ class MazeView {
 public:
   MazeView(uint32_t height, uint32_t width);
 
-  void setController(MazeController *controller_ptr);
+  void setController(MazeController *controller_ptr__);
 
   void render();
   void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
   void enFramequeue(const MazeNode &node);
 
 private:
-  MazeRenderer renderer;
+  MazeRenderer renderer__;
 
-  std::vector<std::vector<MazeElement>> render_maze;
-  MazeController *controller_ptr;
-  ThreadSafeQueue<MazeNode> MazeDiffQueue;
-  MazeNode update_node;
-  bool stop_flag;
-  std::mutex maze_mutex;
+  std::vector<std::vector<MazeElement>> render_maze__;
+  MazeController *controller_ptr__;
+  ThreadSafeQueue<MazeNode> maze_diff_queue__;
+  MazeNode update_node__;
+  bool stop_flag__;
+  std::mutex maze_mutex__;
 
 private:
-  void deFramequeue();
-  void renderMaze();
-  void drawGUI();
+  void deFramequeue__();
+  void renderMaze__();
+  void drawGUI__();
 };
 
 #endif

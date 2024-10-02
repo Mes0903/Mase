@@ -16,7 +16,7 @@ MazeModel::MazeModel(uint32_t height, uint32_t width)
 
 void MazeModel::setController(MazeController *controller_ptr)
 {
-  this->controller_ptr = controller_ptr;
+  this->controller_ptr__ = controller_ptr;
 }
 
 void MazeModel::emptyMap()
@@ -24,7 +24,8 @@ void MazeModel::emptyMap()
   for (auto &row : maze)
     std::fill(row.begin(), row.end(), MazeElement::GROUND);
 
-  controller_ptr->setFrameMaze(maze);
+  controller_ptr__->setFrameMaze(maze);
+  controller_ptr__->setModelComplete();
 }
 
 void MazeModel::cleanExplorer()
@@ -32,7 +33,8 @@ void MazeModel::cleanExplorer()
   for (auto &row : maze)
     std::replace(row.begin(), row.end(), MazeElement::EXPLORED, MazeElement::GROUND);
 
-  controller_ptr->setFrameMaze(maze);
+  controller_ptr__->setFrameMaze(maze);
+  controller_ptr__->setModelComplete();
 }
 
 void MazeModel::initMaze()
@@ -48,7 +50,8 @@ void MazeModel::initMaze()
     }
   }
 
-  controller_ptr->setFrameMaze(maze);
+  controller_ptr__->setFrameMaze(maze);
+  controller_ptr__->setModelComplete();
 }
 
 void MazeModel::resetWallAroundMaze()
@@ -75,12 +78,12 @@ void MazeModel::generateMazePrim()
 
   {
     MazeNode seed_node;
-    setBeginPoint(seed_node);
+    setBeginPoint__(seed_node);
 
     std::shuffle(direction_order.begin(), direction_order.end(), gen);
     for (const int32_t index : direction_order) {
       const auto [dir_y, dir_x] = dir_vec[index];
-      if (inMaze(seed_node, dir_y, dir_x))
+      if (inMaze__(seed_node, dir_y, dir_x))
         candidate_list.emplace_back(MazeNode{ seed_node.y + dir_y, seed_node.x + dir_x, maze[seed_node.y + dir_y][seed_node.x + dir_x] });    // 將起點四周在迷宮內的牆加入 candidate_list 列表中
     }
   }
@@ -92,13 +95,13 @@ void MazeModel::generateMazePrim()
     MazeElement up_element{ MazeElement::INVALID }, down_element{ MazeElement::INVALID }, left_element{ MazeElement::INVALID }, right_element{ MazeElement::INVALID };    // 目前這個牆的上下左右結點
     // 如果抽到的那格確定是牆再去判斷，有時候會有一個牆重複被加到清單裡的情形
     if (current_node.element == MazeElement::WALL) {
-      if (inMaze(current_node, -1, 0))
+      if (inMaze__(current_node, -1, 0))
         up_element = maze[current_node.y - 1][current_node.x];
-      if (inMaze(current_node, 1, 0))
+      if (inMaze__(current_node, 1, 0))
         down_element = maze[current_node.y + 1][current_node.x];
-      if (inMaze(current_node, 0, -1))
+      if (inMaze__(current_node, 0, -1))
         left_element = maze[current_node.y][current_node.x - 1];
-      if (inMaze(current_node, 0, 1))
+      if (inMaze__(current_node, 0, 1))
         right_element = maze[current_node.y][current_node.x + 1];
 
       // 如果左右都探索過了，或上下都探索過了，就把這個牆留著，並且加到確定是牆壁的 vector 裡
@@ -111,7 +114,7 @@ void MazeModel::generateMazePrim()
         maze[current_node.y][current_node.x] = MazeElement::EXPLORED;
         candidate_list.erase(candidate_list.begin() + random_index);
 
-        controller_ptr->enFramequeue(current_node);
+        controller_ptr__->enFramequeue(current_node);
 
         if (up_element == MazeElement::EXPLORED && down_element == MazeElement::GROUND)    // 上面探索過，下面還沒
           ++current_node.y;    // 將目前的節點改成牆壁 "下面" 那個節點
@@ -127,19 +130,19 @@ void MazeModel::generateMazePrim()
         std::shuffle(direction_order.begin(), direction_order.end(), gen);
         for (const int32_t index : direction_order) {    //(新的點的)上下左右遍歷
           const auto [dir_y, dir_x] = dir_vec[index];
-          if (inMaze(current_node, dir_y, dir_x)) {    // 如果上(下左右)的牆在迷宮內
+          if (inMaze__(current_node, dir_y, dir_x)) {    // 如果上(下左右)的牆在迷宮內
             if (maze[current_node.y + dir_y][current_node.x + dir_x] == MazeElement::WALL)    // 而且如果這個節點是牆
               candidate_list.emplace_back(MazeNode{ current_node.y + dir_y, current_node.x + dir_x, maze[current_node.y + dir_y][current_node.x + dir_x] });    // 就將這個節點加入wall列表中
           }
         }
 
-        controller_ptr->enFramequeue(current_node);
+        controller_ptr__->enFramequeue(current_node);
       }
     }
   }
 
-  setFlag();
-  controller_ptr->setModelComplete();
+  setFlag__();
+  controller_ptr__->setModelComplete();
 }    // end generateMazePrim()
 
 void MazeModel::generateMazeRecursionBacktracker()
@@ -158,7 +161,7 @@ void MazeModel::generateMazeRecursionBacktracker()
   {
     TraceNode seed_node;
     std::shuffle(seed_node.direction_order.begin(), seed_node.direction_order.end(), gen);
-    setBeginPoint(seed_node.node);
+    setBeginPoint__(seed_node.node);
     candidate_list.push(seed_node);
   }
 
@@ -172,7 +175,7 @@ void MazeModel::generateMazeRecursionBacktracker()
     int8_t dir = current_node.direction_order[current_node.index++];
     const auto [dir_y, dir_x] = dir_vec[dir];
 
-    if (!inMaze(current_node.node, 2 * dir_y, 2 * dir_x))
+    if (!inMaze__(current_node.node, 2 * dir_y, 2 * dir_x))
       continue;
 
     if (maze[current_node.node.y + 2 * dir_y][current_node.node.x + 2 * dir_x] == MazeElement::GROUND) {
@@ -181,18 +184,18 @@ void MazeModel::generateMazeRecursionBacktracker()
 
       current_node.node.element = MazeElement::EXPLORED;
       maze[current_node.node.y + dir_y][current_node.node.x + dir_x] = MazeElement::EXPLORED;
-      controller_ptr->enFramequeue(MazeNode{ current_node.node.y + dir_y, current_node.node.x + dir_x, MazeElement::EXPLORED });
+      controller_ptr__->enFramequeue(MazeNode{ current_node.node.y + dir_y, current_node.node.x + dir_x, MazeElement::EXPLORED });
 
       target_node.node.element = MazeElement::EXPLORED;
       maze[target_node.node.y][target_node.node.x] = MazeElement::EXPLORED;
-      controller_ptr->enFramequeue(target_node.node);
+      controller_ptr__->enFramequeue(target_node.node);
 
       candidate_list.push(target_node);
     }
   }
 
-  setFlag();
-  controller_ptr->setModelComplete();
+  setFlag__();
+  controller_ptr__->setModelComplete();
 }    // end generateMazeRecursionBacktracker()
 
 void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx)
@@ -200,7 +203,7 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   int32_t width = rx - lx + 1, height = dy - uy + 1;
   if (width < 2 && height < 2) return;
-  if (!inMaze(MazeNode{ uy, lx, MazeElement::INVALID }, height - 1, width - 1))
+  if (!inMaze__(MazeNode{ uy, lx, MazeElement::INVALID }, height - 1, width - 1))
     return;
 
   bool is_horizontal = (width <= height) ? true : false;
@@ -486,15 +489,15 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
 
 /* -------------------- private utility function --------------------   */
 
-void MazeModel::setFlag()
+void MazeModel::setFlag__()
 {
   maze[BEGIN_Y][BEGIN_X] = MazeElement::BEGIN;
   maze[END_Y][END_X] = MazeElement::END;
-  controller_ptr->enFramequeue(MazeNode{ BEGIN_Y, BEGIN_X, MazeElement::BEGIN });
-  controller_ptr->enFramequeue(MazeNode{ END_Y, END_X, MazeElement::END });
+  controller_ptr__->enFramequeue(MazeNode{ BEGIN_Y, BEGIN_X, MazeElement::BEGIN });
+  controller_ptr__->enFramequeue(MazeNode{ END_Y, END_X, MazeElement::END });
 }
 
-bool MazeModel::inMaze(const MazeNode &node, const int32_t delta_y, const int32_t delta_x)
+bool MazeModel::inMaze__(const MazeNode &node, const int32_t delta_y, const int32_t delta_x)
 {
   return (node.y + delta_y < MAZE_HEIGHT - 1) && (node.x + delta_x < MAZE_WIDTH - 1) && (node.y + delta_y > 0) && (node.x + delta_x > 0);    // 下牆、右牆、上牆、左牆
 }
@@ -505,7 +508,7 @@ bool MazeModel::inMaze(const MazeNode &node, const int32_t delta_y, const int32_
  * @param seed_y
  * @param seed_x
  */
-void MazeModel::setBeginPoint(MazeNode &node)
+void MazeModel::setBeginPoint__(MazeNode &node)
 {
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
   std::uniform_int_distribution<> y_dis(0, (MAZE_HEIGHT - 3) / 2);
@@ -516,8 +519,8 @@ void MazeModel::setBeginPoint(MazeNode &node)
   node.element = MazeElement::EXPLORED;
   maze[node.y][node.x] = MazeElement::EXPLORED;    // Set the randomly chosen point as the generation start point
 
-  controller_ptr->enFramequeue(node);
-}    // end setBeginPoint
+  controller_ptr__->enFramequeue(node);
+}    // end setBeginPoint__
 
 bool MazeModel::is_in_maze(const int32_t y, const int32_t x)
 {

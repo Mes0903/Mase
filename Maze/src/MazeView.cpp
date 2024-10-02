@@ -15,52 +15,52 @@
 #include "MazeNode.h"
 
 MazeView::MazeView(uint32_t height, uint32_t width)
-    : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag{ false }, renderer{} {}
+    : render_maze__{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node__{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag__{ false }, renderer__{} {}
 
-void MazeView::setController(MazeController *controller_ptr)
+void MazeView::setController(MazeController *controller_ptr__)
 {
-  this->controller_ptr = controller_ptr;
+  this->controller_ptr__ = controller_ptr__;
 }
 
 void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
 {
-  std::lock_guard<std::mutex> lock(maze_mutex);
-  render_maze = maze;
+  std::lock_guard<std::mutex> lock(maze_mutex__);
+  render_maze__ = maze;
 }
 
 void MazeView::enFramequeue(const MazeNode &node)
 {
-  MazeDiffQueue.enqueue(node);
+  maze_diff_queue__.enqueue(node);
 }
 
-void MazeView::deFramequeue()
+void MazeView::deFramequeue__()
 {
-  std::optional<MazeNode> opt_node = MazeDiffQueue.dequeue();
+  std::optional<MazeNode> opt_node = maze_diff_queue__.dequeue();
   if (opt_node.has_value()) {
-    update_node = *opt_node;
+    update_node__ = *opt_node;
 
-    std::lock_guard<std::mutex> lock(maze_mutex);
-    render_maze[update_node.y][update_node.x] = update_node.element;
+    std::lock_guard<std::mutex> lock(maze_mutex__);
+    render_maze__[update_node__.y][update_node__.x] = update_node__.element;
   }
-  else if (controller_ptr->isModelComplete()) {
-    controller_ptr->handleInput(MazeAction::G_CLEAN_EXPLORER);
+  else if (controller_ptr__->isModelComplete()) {
+    controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORER);
   }
 }
 
-void MazeView::renderMaze()
+void MazeView::renderMaze__()
 {
   ImDrawList *draw_list = ImGui::GetWindowDrawList();
   const ImVec2 p = ImGui::GetCursorScreenPos();
   const float cell_size = GRID_SIZE;
 
-  std::lock_guard<std::mutex> lock(maze_mutex);
+  std::lock_guard<std::mutex> lock(maze_mutex__);
   for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
     for (int32_t x = 0; x < MAZE_WIDTH; ++x) {
-      MazeElement cell = render_maze[y][x];
+      MazeElement cell = render_maze__[y][x];
       ImVec2 cell_min = ImVec2(p.x + x * cell_size, p.y + y * cell_size);
       ImVec2 cell_max = ImVec2(cell_min.x + cell_size, cell_min.y + cell_size);
 
-      if (update_node.y == y && update_node.x == x)
+      if (update_node__.y == y && update_node__.x == x)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(50, 215, 250, 255));
       else if (cell == MazeElement::BEGIN)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(35, 220, 130, 255));
@@ -78,35 +78,35 @@ void MazeView::renderMaze()
   }
 }
 
-void MazeView::drawGUI()
+void MazeView::drawGUI__()
 {
-  if (!stop_flag)
-    deFramequeue();
+  if (!stop_flag__)
+    deFramequeue__();
 
   ImGui::Begin("Maze Generator and Solver");
 
   ImGui::BeginGroup();
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-  ImGui::Checkbox("Stop", &stop_flag);
-  if (ImGui::Button("Clean All")) controller_ptr->handleInput(MazeAction::G_CLEANALL);
-  if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr->handleInput(MazeAction::G_PRIMS);
-  if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
-  if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr->handleInput(MazeAction::G_RECURSION_DIVISION);
-  if (ImGui::Button("Solve Maze (DFS)")) controller_ptr->handleInput(MazeAction::S_DFS);
-  if (ImGui::Button("Solve Maze (BFS)")) controller_ptr->handleInput(MazeAction::S_BFS);
-  if (ImGui::Button("Solve Maze (UCS Manhattan)")) controller_ptr->handleInput(MazeAction::S_UCS_MANHATTAN);
-  if (ImGui::Button("Solve Maze (UCS Two Norm)")) controller_ptr->handleInput(MazeAction::S_UCS_TWO_NORM);
-  if (ImGui::Button("Solve Maze (UCS Interval)")) controller_ptr->handleInput(MazeAction::S_UCS_INTERVAL);
-  if (ImGui::Button("Solve Maze (Greedy)")) controller_ptr->handleInput(MazeAction::S_GREEDY);
-  if (ImGui::Button("Solve Maze (A*)")) controller_ptr->handleInput(MazeAction::S_ASTAR);
-  if (ImGui::Button("Solve Maze (A* Interval)")) controller_ptr->handleInput(MazeAction::S_ASTAR_INTERVAL);
+  ImGui::Checkbox("Stop", &stop_flag__);
+  if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
+  if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIMS);
+  if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
+  if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_DIVISION);
+  if (ImGui::Button("Solve Maze (DFS)")) controller_ptr__->handleInput(MazeAction::S_DFS);
+  if (ImGui::Button("Solve Maze (BFS)")) controller_ptr__->handleInput(MazeAction::S_BFS);
+  if (ImGui::Button("Solve Maze (UCS Manhattan)")) controller_ptr__->handleInput(MazeAction::S_UCS_MANHATTAN);
+  if (ImGui::Button("Solve Maze (UCS Two Norm)")) controller_ptr__->handleInput(MazeAction::S_UCS_TWO_NORM);
+  if (ImGui::Button("Solve Maze (UCS Interval)")) controller_ptr__->handleInput(MazeAction::S_UCS_INTERVAL);
+  if (ImGui::Button("Solve Maze (Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY);
+  if (ImGui::Button("Solve Maze (A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR);
+  if (ImGui::Button("Solve Maze (A* Interval)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_INTERVAL);
   ImGui::EndGroup();
 
   ImGui::SameLine();
   ImGui::BeginChild("MazeView", ImVec2(0, 0), true);
   // std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-  renderMaze();
+  renderMaze__();
   ImGui::EndChild();
 
   ImGui::End();
@@ -114,9 +114,9 @@ void MazeView::drawGUI()
 
 void MazeView::render()
 {
-  while (!glfwWindowShouldClose(renderer.window)) {
-    renderer.setNewFrame();
-    drawGUI();
-    renderer.render();
+  while (!glfwWindowShouldClose(renderer__.window__)) {
+    renderer__.setNewFrame__();
+    drawGUI__();
+    renderer__.render();
   }
 }

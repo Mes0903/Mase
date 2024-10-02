@@ -7,11 +7,11 @@
 
 void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 {
-  this->model_ptr = model_ptr;
-  this->view_ptr = view_ptr;
+  this->model_ptr__ = model_ptr;
+  this->view_ptr__ = view_ptr;
 
-  this->model_ptr->setController(this);
-  this->view_ptr->setController(this);
+  this->model_ptr__->setController(this);
+  this->view_ptr__->setController(this);
 }
 
 void MazeController::handleInput(const MazeAction actions)
@@ -20,48 +20,48 @@ void MazeController::handleInput(const MazeAction actions)
 
   switch (actions) {
   case MazeAction::G_CLEANALL:
-    model_ptr->emptyMap();
+    model_ptr__->emptyMap();
     break;
   case MazeAction::G_CLEAN_EXPLORER:
-    model_ptr->cleanExplorer();
+    model_ptr__->cleanExplorer();
     break;
   case MazeAction::G_INIT:
-    model_ptr->initMaze();
+    model_ptr__->initMaze();
     break;
   case MazeAction::G_PRIMS:
-    t1 = std::thread(&MazeModel::generateMazePrim, model_ptr);
+    t1 = std::thread(&MazeModel::generateMazePrim, model_ptr__);
     t1.detach();
     break;
   case MazeAction::G_RECURSION_BACKTRACKER:
-    t1 = std::thread(&MazeModel::generateMazeRecursionBacktracker, model_ptr);
+    t1 = std::thread(&MazeModel::generateMazeRecursionBacktracker, model_ptr__);
     t1.detach();
     break;
   case MazeAction::G_RECURSION_DIVISION:
-    model_ptr->generateMazeRecursionDivision(1, 1, MAZE_HEIGHT - 2, MAZE_WIDTH - 2);
+    model_ptr__->generateMazeRecursionDivision(1, 1, MAZE_HEIGHT - 2, MAZE_WIDTH - 2);
     break;
   case MazeAction::S_DFS:
-    model_ptr->solveMazeDFS(1, 0);
+    model_ptr__->solveMazeDFS(1, 0);
     break;
   case MazeAction::S_BFS:
-    model_ptr->solveMazeBFS();
+    model_ptr__->solveMazeBFS();
     break;
   case MazeAction::S_UCS_MANHATTAN:
-    model_ptr->solveMazeUCS(actions);
+    model_ptr__->solveMazeUCS(actions);
     break;
   case MazeAction::S_UCS_TWO_NORM:
-    model_ptr->solveMazeUCS(actions);
+    model_ptr__->solveMazeUCS(actions);
     break;
   case MazeAction::S_UCS_INTERVAL:
-    model_ptr->solveMazeUCS(actions);
+    model_ptr__->solveMazeUCS(actions);
     break;
   case MazeAction::S_GREEDY:
-    model_ptr->solveMazeGreedy();
+    model_ptr__->solveMazeGreedy();
     break;
   case MazeAction::S_ASTAR:
-    model_ptr->solveMazeAStar(actions);
+    model_ptr__->solveMazeAStar(actions);
     break;
   case MazeAction::S_ASTAR_INTERVAL:
-    model_ptr->solveMazeAStar(actions);
+    model_ptr__->solveMazeAStar(actions);
     break;
   default:
     std::clog << "invalid action" << std::endl;
@@ -73,12 +73,12 @@ void MazeController::handleInput(const MazeAction actions)
 
 void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
 {
-  view_ptr->setFrameMaze(maze);
+  view_ptr__->setFrameMaze(maze);
 }
 
 void MazeController::enFramequeue(const MazeNode &node)
 {
-  view_ptr->enFramequeue(node);
+  view_ptr__->enFramequeue(node);
 }
 
 void MazeController::setModelComplete()

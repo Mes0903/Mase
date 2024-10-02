@@ -35,8 +35,8 @@ public:
   std::atomic<bool> model_complete_flag{ false };
 
 private:
-  MazeModel *model_ptr;
-  MazeView *view_ptr;
+  MazeModel *model_ptr__;
+  MazeView *view_ptr__;
 };
 
 #endif

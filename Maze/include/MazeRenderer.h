@@ -24,17 +24,17 @@ public:
   void render();
 
 private:
-  void initGLFW();
-  void hintGLFWWindow();
-  void createGLFWWindow();
-  void initImGui();
-  void setNewFrame();
-  void cleanupGLFW();
-  void cleanupImGui();
+  void initGLFW__();
+  void hintGLFWWindow__();
+  void createGLFWWindow__();
+  void initImGui__();
+  void setNewFrame__();
+  void cleanupGLFW__();
+  void cleanupImGui__();
 
-  GLFWwindow *window;
-  ImVec4 clear_color;
-  const char *glsl_version;
+  GLFWwindow *window__;
+  ImVec4 clear_color__;
+  const char *glsl_version__;
 
   friend class MazeView;
 };
