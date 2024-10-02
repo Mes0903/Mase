@@ -59,7 +59,6 @@ void MazeModel::resetWallAroundMaze()
 
 void MazeModel::generateMazePrim()
 {
-  resetMaze();
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
   std::vector<MazeNode> explored_cache;
@@ -130,21 +129,16 @@ void MazeModel::generateMazePrim()
 
         controller_ptr->enFramequeue(current_node);
       }
-    }    // end if(current_node.element == MazeElement::WALL)
-  }    // end while ( !candidate_list.empty() )
+    }   
+  }    
+  
+  controller_ptr->setModelComplete();
 
-  for (MazeNode &current_node : explored_cache) {    // 把剛剛探索過的點換成 GROUND ，因為我們在生成地圖
-    current_node.element = MazeElement::GROUND;
-    maze[current_node.y][current_node.x] = MazeElement::GROUND;
-    controller_ptr->enFramequeue(current_node);
-  }
 
-  setFlag();
 }    // end generateMazePrim()
 
 void MazeModel::generateMazeRecursionBacktracker()
 {
-  resetMaze();
 
   struct TraceNode {
     MazeNode node;
@@ -195,15 +189,8 @@ void MazeModel::generateMazeRecursionBacktracker()
     }
   }
 
-  while (!explored_cache.empty()) {
-    TraceNode &current_node = explored_cache.top();
-    current_node.node.element = MazeElement::GROUND;
-    maze[current_node.node.y][current_node.node.x] = MazeElement::GROUND;
-    controller_ptr->enFramequeue(current_node.node);
-    explored_cache.pop();
-  }
+  controller_ptr->setModelComplete();
 
-  setFlag();
 }    // end generateMazeRecursionBacktracker()
 
 void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx)

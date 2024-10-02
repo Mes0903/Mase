@@ -72,6 +72,7 @@ private:
 
 private:
   bool inMaze(const MazeNode &node, const int32_t delta_y, const int32_t delta_x);
+  void setFlag();
 
   void setBeginPoint(MazeNode &node);
   bool is_in_maze(const int32_t y, const int32_t x);

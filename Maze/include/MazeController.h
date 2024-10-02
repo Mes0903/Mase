@@ -3,8 +3,8 @@
 
 /**
  * @file MazeController.h
- * @author Mes (mes900903@gmail.com)
- * @brief The controller of the maze, accept and process the user's action
+ * @author Mes
+ * @brief The controller of the maze, accepts and processes the user's action.
  * @version 0.1
  * @date 2024-09-22
  */
@@ -14,7 +14,7 @@
 #include "MazeNode.h"
 
 #include <memory>
-#include <mutex>
+#include <atomic>
 
 class MazeModel;
 class MazeView;
@@ -26,11 +26,17 @@ public:
   void setModelView(MazeModel* model_ptr, MazeView* view_ptr);
 
   void handleInput(const MazeAction action);
-  void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
-  void enFramequeue(const MazeNode &node);
+  void setFrameMaze(const std::vector<std::vector<MazeElement>>& maze);
+  void enFramequeue(const MazeNode& node);
+
+  void setModelComplete(); 
+  bool isModelComplete() const; 
+
+  void InitMaze();
 
 public:
-  std::mutex g_mutex;
+  std::atomic<bool> model_complete_flag{false};
+
 
 private:
   MazeModel* model_ptr;  

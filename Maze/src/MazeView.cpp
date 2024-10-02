@@ -28,27 +28,34 @@ void MazeView::setController(MazeController* controller_ptr) {
 
 void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
 {
-  std::lock_guard<std::mutex> lock(controller_ptr->g_mutex);
-  render_maze = maze;
+    std::lock_guard<std::mutex> lock(maze_mutex);  
+    render_maze = maze;
 }
+
 
 void MazeView::enFramequeue(const MazeNode &node)
 {
-  std::lock_guard<std::mutex> lock(controller_ptr->g_mutex);
-  frame_queue.emplace(node);
+  MazeDiffQueue.enqueue(node);
 }
 
-void MazeView::deFramequeue()
-{
-  std::lock_guard<std::mutex> lock(controller_ptr->g_mutex);
-  if (frame_queue.empty())
-    return;
 
-  update_node = frame_queue.front();
-  frame_queue.pop();
-  if (update_node.y != -1 && update_node.x != -1)
-    render_maze[update_node.y][update_node.x] = update_node.element;
+
+void MazeView::deFramequeue() {
+    std::optional<MazeNode> opt_node = MazeDiffQueue.dequeue();
+    if (opt_node.has_value()) {
+        update_node = *opt_node;
+
+        if (update_node.y != -1 && update_node.x != -1) {
+            std::lock_guard<std::mutex> lock(maze_mutex);
+            render_maze[update_node.y][update_node.x] = update_node.element;
+        }
+    } else if (controller_ptr->isModelComplete()) {
+        controller_ptr->handleInput(MazeAction::G_RESET);
+    }
 }
+
+
+
 
 void MazeView::renderMaze()
 {
@@ -56,6 +63,8 @@ void MazeView::renderMaze()
   const ImVec2 p = ImGui::GetCursorScreenPos();
   const float cell_size = 15.0f;
 
+
+  std::lock_guard<std::mutex> lock(maze_mutex);
   for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
     for (int32_t x = 0; x < MAZE_WIDTH; ++x) {
       MazeElement cell = render_maze[y][x];

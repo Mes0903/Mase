@@ -34,7 +34,7 @@ struct MazeNode;
 class MazeView {
 public:
   MazeView(uint32_t height, uint32_t width);
-  void setController(MazeController *controller_ptr);
+  void setController(MazeController* controller_ptr);
 
   void render(GLFWwindow*);
   void renderGUI();
@@ -49,6 +49,7 @@ private:
   ThreadSafeQueue<MazeNode> MazeDiffQueue;
   MazeNode update_node;
   bool stop_flag;
+  std::mutex maze_mutex;
 
 private:
   void deFramequeue();

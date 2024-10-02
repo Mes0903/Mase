@@ -17,6 +17,7 @@ void MazeController::setModelView(MazeModel* model_ptr, MazeView* view_ptr)
 void MazeController::handleInput(const MazeAction actions)
 {
   std::thread t1;
+  model_complete_flag.store(false);
 
   switch (actions) {
   case MazeAction::G_RESET:
@@ -71,4 +72,15 @@ void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>>& m
 void MazeController::enFramequeue(const MazeNode& node)
 {
   view_ptr->enFramequeue(node);
+}
+
+void MazeController::setModelComplete() {
+    model_complete_flag.store(true);  
+}
+bool MazeController::isModelComplete() const {
+    return model_complete_flag.load();  
+}
+
+void MazeController::InitMaze(){
+  model_ptr->resetMaze();
 }

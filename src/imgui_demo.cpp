@@ -87,6 +87,7 @@ int main(int, char **)
   MazeController controller;
 
   controller.setModelView(&model, &view);
+  controller.InitMaze();
 
   view.render(window);
 
