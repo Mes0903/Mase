@@ -1,16 +1,11 @@
 #include "imgui.h"
-
 #include "MazeController.h"
 #include "MazeModel.h"
 #include "MazeView.h"
 #include "MazeNode.h"
 
-#include <memory>
-#include <cstdint>
-
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "implot.h"
 #include <stdio.h>
 #include "glad/glad.h"
 #define GL_SILENCE_DEPRECATION
