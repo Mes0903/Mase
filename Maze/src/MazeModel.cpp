@@ -16,10 +16,10 @@
 MazeModel::MazeModel(uint32_t height, uint32_t width)
     : maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } } {}
 
-void MazeModel::setController(MazeController *controller_ptr)
-{
-  this->controller_ptr = std::unique_ptr<MazeController>(controller_ptr);
+void MazeModel::setController(MazeController* controller_ptr) {
+    this->controller_ptr = controller_ptr;  
 }
+
 
 void MazeModel::emptyMap()
 {
@@ -60,7 +60,6 @@ void MazeModel::resetWallAroundMaze()
 void MazeModel::generateMazePrim()
 {
   resetMaze();
-
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
   std::vector<MazeNode> explored_cache;

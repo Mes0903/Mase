@@ -5,11 +5,13 @@
 #include <iostream>
 #include <thread>
 
-
-void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
+void MazeController::setModelView(MazeModel* model_ptr, MazeView* view_ptr)
 {
-  this->model_ptr = std::unique_ptr<MazeModel>(model_ptr);
-  this->view_ptr = std::unique_ptr<MazeView>(view_ptr);
+  this->model_ptr = model_ptr; 
+  this->view_ptr = view_ptr;
+
+  this->model_ptr->setController(this);
+  this->view_ptr->setController(this);
 }
 
 void MazeController::handleInput(const MazeAction actions)
@@ -21,11 +23,11 @@ void MazeController::handleInput(const MazeAction actions)
     model_ptr->resetMaze();
     break;
   case MazeAction::G_PRIMS:
-    t1 = std::thread(&MazeModel::generateMazePrim, std::ref(*model_ptr));
+    t1 = std::thread(&MazeModel::generateMazePrim, model_ptr);
     t1.detach();
     break;
   case MazeAction::G_RECURSION_BACKTRACKER:
-    t1 = std::thread(&MazeModel::generateMazeRecursionBacktracker, std::ref(*model_ptr));
+    t1 = std::thread(&MazeModel::generateMazeRecursionBacktracker, model_ptr);
     t1.detach();
     break;
   case MazeAction::G_RECURSION_DIVISION:
@@ -61,12 +63,12 @@ void MazeController::handleInput(const MazeAction actions)
   }
 }
 
-void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
+void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>>& maze)
 {
   view_ptr->setFrameMaze(maze);
 }
 
-void MazeController::enFramequeue(const MazeNode &node)
+void MazeController::enFramequeue(const MazeNode& node)
 {
   view_ptr->enFramequeue(node);
 }

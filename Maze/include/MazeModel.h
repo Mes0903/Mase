@@ -47,7 +47,7 @@ class MazeController;
 class MazeModel {
 public:
   MazeModel(uint32_t height, uint32_t width);
-  void setController(MazeController *controller_ptr);
+  void setController(MazeController* controller_ptr);
 
   void resetMaze();
   void emptyMap();
@@ -68,10 +68,9 @@ public:
   std::vector<std::vector<MazeElement>> maze;
 
 private:
-  std::unique_ptr<MazeController> controller_ptr;
+  MazeController* controller_ptr;
 
 private:
-  void setFlag();
   bool inMaze(const MazeNode &node, const int32_t delta_y, const int32_t delta_x);
 
   void setBeginPoint(MazeNode &node);

@@ -21,9 +21,9 @@ class MazeView;
 struct MazeNode;
 enum class MazeAction;
 
-class MazeController {
+class MazeController{
 public:
-  void setModelView(MazeModel *model_ptr, MazeView *view_ptr);
+  void setModelView(MazeModel* model_ptr, MazeView* view_ptr);
 
   void handleInput(const MazeAction action);
   void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
@@ -33,8 +33,8 @@ public:
   std::mutex g_mutex;
 
 private:
-  std::unique_ptr<MazeModel> model_ptr;
-  std::unique_ptr<MazeView> view_ptr;
+  MazeModel* model_ptr;  
+  MazeView* view_ptr;
 };
 
 #endif

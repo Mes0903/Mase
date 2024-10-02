@@ -8,12 +8,22 @@
 #include <memory>
 #include <cstdint>
 
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include "implot.h"
+#include <stdio.h>
+#include "glad/glad.h"
+#define GL_SILENCE_DEPRECATION
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+#include <GLES2/gl2.h>
+#endif
+#include <GLFW/glfw3.h>
+
 MazeView::MazeView(uint32_t height, uint32_t width)
     : render_maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag{ false } {}
 
-void MazeView::setController(MazeController *controller_ptr)
-{
-  this->controller_ptr = std::unique_ptr<MazeController>(controller_ptr);
+void MazeView::setController(MazeController* controller_ptr) {
+    this->controller_ptr = controller_ptr; 
 }
 
 void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
@@ -101,4 +111,29 @@ void MazeView::renderGUI()
   ImGui::EndChild();
 
   ImGui::End();
+}
+
+void MazeView::render(GLFWwindow *window){
+    // render loop
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  while (!glfwWindowShouldClose(window)) {
+    glfwPollEvents();
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    renderGUI();
+
+    // Rendering
+    ImGui::Render();
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    glfwSwapBuffers(window);
+  }
 }
