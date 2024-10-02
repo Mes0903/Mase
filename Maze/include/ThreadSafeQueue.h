@@ -1,4 +1,5 @@
-#pragma once
+#ifndef THREADSAFEQUEUE_H
+#define THREADSAFEQUEUE_H
 
 #include <queue>
 #include <mutex>
@@ -36,3 +37,5 @@ private:
   std::queue<T> queue_;
   mutable std::mutex mtx_;
 };
+
+#endif
