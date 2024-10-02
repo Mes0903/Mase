@@ -25,9 +25,19 @@ void MazeModel::emptyMap()
 {
   for (auto &row : maze)
     std::fill(row.begin(), row.end(), MazeElement::GROUND);
+
+  controller_ptr->setFrameMaze(maze);
 }
 
-void MazeModel::resetMaze()
+void MazeModel::cleanExplorer()
+{
+  for (auto &row : maze)
+    std::replace(row.begin(), row.end(), MazeElement::EXPLORED, MazeElement::GROUND);
+
+  controller_ptr->setFrameMaze(maze);
+}
+
+void MazeModel::initMaze()
 {
   for (int32_t y{}; y < MAZE_HEIGHT; ++y) {
     for (int32_t x{}; x < MAZE_WIDTH; ++x) {
@@ -59,15 +69,15 @@ void MazeModel::resetWallAroundMaze()
 
 void MazeModel::generateMazePrim()
 {
+  initMaze();
+
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
-  std::vector<MazeNode> explored_cache;
   std::vector<MazeNode> candidate_list;    // 待找的牆的列表
 
   {
     MazeNode seed_node;
     setBeginPoint(seed_node);
-    explored_cache.emplace_back(seed_node);
 
     std::shuffle(direction_order.begin(), direction_order.end(), gen);
     for (const int32_t index : direction_order) {
@@ -101,7 +111,6 @@ void MazeModel::generateMazePrim()
         // 不然就把牆打通
         current_node.element = MazeElement::EXPLORED;
         maze[current_node.y][current_node.x] = MazeElement::EXPLORED;
-        explored_cache.emplace_back(current_node);
         candidate_list.erase(candidate_list.begin() + random_index);
 
         controller_ptr->enFramequeue(current_node);
@@ -117,7 +126,6 @@ void MazeModel::generateMazePrim()
 
         current_node.element = MazeElement::EXPLORED;
         maze[current_node.y][current_node.x] = MazeElement::EXPLORED;    // 將現在的節點(牆壁上下左右其中一個，看哪個方向符合條件) 改為 EXPLORED
-        explored_cache.emplace_back(current_node);    // 將這個節點的座標記起來，等等要改回 GROUND
         std::shuffle(direction_order.begin(), direction_order.end(), gen);
         for (const int32_t index : direction_order) {    //(新的點的)上下左右遍歷
           const auto [dir_y, dir_x] = dir_vec[index];
@@ -132,11 +140,14 @@ void MazeModel::generateMazePrim()
     }
   }
 
+  setFlag();
   controller_ptr->setModelComplete();
 }    // end generateMazePrim()
 
 void MazeModel::generateMazeRecursionBacktracker()
 {
+  initMaze();
+
   struct TraceNode {
     MazeNode node;
     int8_t index = 0;
@@ -144,7 +155,6 @@ void MazeModel::generateMazeRecursionBacktracker()
   };
 
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-  std::stack<TraceNode> explored_cache;    // 之後要改回道路的座標清單
   std::stack<TraceNode> candidate_list;
 
   {
@@ -152,7 +162,6 @@ void MazeModel::generateMazeRecursionBacktracker()
     std::shuffle(seed_node.direction_order.begin(), seed_node.direction_order.end(), gen);
     setBeginPoint(seed_node.node);
     candidate_list.push(seed_node);
-    explored_cache.push(seed_node);
   }
 
   while (!candidate_list.empty()) {
@@ -175,17 +184,16 @@ void MazeModel::generateMazeRecursionBacktracker()
       current_node.node.element = MazeElement::EXPLORED;
       maze[current_node.node.y + dir_y][current_node.node.x + dir_x] = MazeElement::EXPLORED;
       controller_ptr->enFramequeue(MazeNode{ current_node.node.y + dir_y, current_node.node.x + dir_x, MazeElement::EXPLORED });
-      explored_cache.emplace(TraceNode{ { current_node.node.y + dir_y, current_node.node.x + dir_x, MazeElement::EXPLORED }, 0, { 0, 1, 2, 3 } });
 
       target_node.node.element = MazeElement::EXPLORED;
       maze[target_node.node.y][target_node.node.x] = MazeElement::EXPLORED;
       controller_ptr->enFramequeue(target_node.node);
-      explored_cache.push(target_node);
 
       candidate_list.push(target_node);
     }
   }
 
+  setFlag();
   controller_ptr->setModelComplete();
 }    // end generateMazeRecursionBacktracker()
 
@@ -486,7 +494,6 @@ void MazeModel::setFlag()
   maze[END_Y][END_X] = MazeElement::END;
   controller_ptr->enFramequeue(MazeNode{ BEGIN_Y, BEGIN_X, MazeElement::BEGIN });
   controller_ptr->enFramequeue(MazeNode{ END_Y, END_X, MazeElement::END });
-  controller_ptr->enFramequeue(MazeNode{ -1, -1, MazeElement::INVALID });
 }
 
 bool MazeModel::inMaze(const MazeNode &node, const int32_t delta_y, const int32_t delta_x)

@@ -28,7 +28,7 @@ private:
   void hintGLFWWindow();
   void createGLFWWindow();
   void initImGui();
-  void newFrame();
+  void setNewFrame();
   void cleanupGLFW();
   void cleanupImGui();
 

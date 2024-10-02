@@ -24,11 +24,13 @@ inline constexpr int32_t BEGIN_Y = 1;
 inline constexpr int32_t BEGIN_X = 0;
 inline constexpr int32_t END_Y = MAZE_HEIGHT - 2;
 inline constexpr int32_t END_X = MAZE_WIDTH - 1;
-inline constexpr int32_t GRID_SIZE = 25;
+inline constexpr int32_t GRID_SIZE = 15;
 inline constexpr std::pair<int32_t, int32_t> dir_vec[4]{ { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
 enum class MazeAction : int32_t {
-  G_RESET,
+  G_CLEANALL,
+  G_CLEAN_EXPLORER,
+  G_INIT,
   G_PRIMS,
   G_RECURSION_BACKTRACKER,
   G_RECURSION_DIVISION,
@@ -49,8 +51,9 @@ public:
   MazeModel(uint32_t height, uint32_t width);
   void setController(MazeController *controller_ptr);
 
-  void resetMaze();
   void emptyMap();
+  void cleanExplorer();
+  void initMaze();
   void resetWallAroundMaze();
 
   // maze generation and solving methods

@@ -78,7 +78,7 @@ void MazeRenderer::initImGui()
   }
 }
 
-void MazeRenderer::newFrame()
+void MazeRenderer::setNewFrame()
 {
   glfwPollEvents();
   ImGui_ImplOpenGL3_NewFrame();

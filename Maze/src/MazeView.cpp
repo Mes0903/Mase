@@ -39,13 +39,11 @@ void MazeView::deFramequeue()
   if (opt_node.has_value()) {
     update_node = *opt_node;
 
-    if (update_node.y != -1 && update_node.x != -1) {
-      std::lock_guard<std::mutex> lock(maze_mutex);
-      render_maze[update_node.y][update_node.x] = update_node.element;
-    }
+    std::lock_guard<std::mutex> lock(maze_mutex);
+    render_maze[update_node.y][update_node.x] = update_node.element;
   }
   else if (controller_ptr->isModelComplete()) {
-    controller_ptr->handleInput(MazeAction::G_RESET);
+    controller_ptr->handleInput(MazeAction::G_CLEAN_EXPLORER);
   }
 }
 
@@ -53,7 +51,7 @@ void MazeView::renderMaze()
 {
   ImDrawList *draw_list = ImGui::GetWindowDrawList();
   const ImVec2 p = ImGui::GetCursorScreenPos();
-  const float cell_size = 15.0f;
+  const float cell_size = GRID_SIZE;
 
   std::lock_guard<std::mutex> lock(maze_mutex);
   for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
@@ -80,7 +78,7 @@ void MazeView::renderMaze()
   }
 }
 
-void MazeView::renderGUI()
+void MazeView::drawGUI()
 {
   if (!stop_flag)
     deFramequeue();
@@ -91,6 +89,7 @@ void MazeView::renderGUI()
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::Checkbox("Stop", &stop_flag);
+  if (ImGui::Button("Clean All")) controller_ptr->handleInput(MazeAction::G_CLEANALL);
   if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr->handleInput(MazeAction::G_PRIMS);
   if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
   if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr->handleInput(MazeAction::G_RECURSION_DIVISION);
@@ -116,10 +115,8 @@ void MazeView::renderGUI()
 void MazeView::render()
 {
   while (!glfwWindowShouldClose(renderer.window)) {
-    renderer.newFrame();
-
-    renderGUI();
-
+    renderer.setNewFrame();
+    drawGUI();
     renderer.render();
   }
 }

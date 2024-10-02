@@ -20,8 +20,14 @@ void MazeController::handleInput(const MazeAction actions)
   model_complete_flag.store(false);
 
   switch (actions) {
-  case MazeAction::G_RESET:
-    model_ptr->resetMaze();
+  case MazeAction::G_CLEANALL:
+    model_ptr->emptyMap();
+    break;
+  case MazeAction::G_CLEAN_EXPLORER:
+    model_ptr->cleanExplorer();
+    break;
+  case MazeAction::G_INIT:
+    model_ptr->initMaze();
     break;
   case MazeAction::G_PRIMS:
     t1 = std::thread(&MazeModel::generateMazePrim, model_ptr);
@@ -81,9 +87,4 @@ void MazeController::setModelComplete()
 bool MazeController::isModelComplete() const
 {
   return model_complete_flag.load();
-}
-
-void MazeController::InitMaze()
-{
-  model_ptr->resetMaze();
 }

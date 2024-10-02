@@ -32,8 +32,6 @@ public:
   void setModelComplete();
   bool isModelComplete() const;
 
-  void InitMaze();
-
 public:
   std::atomic<bool> model_complete_flag{ false };
 

@@ -40,7 +40,7 @@ private:
 private:
   void deFramequeue();
   void renderMaze();
-  void renderGUI();
+  void drawGUI();
 };
 
 #endif
