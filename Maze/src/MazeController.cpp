@@ -2,8 +2,8 @@
 #include "MazeModel.h"
 #include "MazeView.h"
 
-#include <iostream>
 #include <thread>
+#include <iostream>
 
 void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 {
@@ -17,7 +17,6 @@ void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 void MazeController::handleInput(const MazeAction actions)
 {
   std::thread t1;
-  model_complete_flag.store(false);
 
   switch (actions) {
   case MazeAction::G_CLEANALL:
@@ -68,6 +67,8 @@ void MazeController::handleInput(const MazeAction actions)
     std::clog << "invalid action" << std::endl;
     break;
   }
+
+  model_complete_flag.store(false);
 }
 
 void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
