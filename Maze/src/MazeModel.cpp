@@ -10,8 +10,6 @@
 #include <queue>
 #include <array>
 #include <utility>
-#include <memory>
-#include <iostream>
 
 MazeModel::MazeModel(uint32_t height, uint32_t width)
     : maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } } {}

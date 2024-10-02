@@ -13,7 +13,6 @@
 #include "MazeView.h"
 #include "MazeNode.h"
 
-#include <memory>
 #include <atomic>
 
 class MazeModel;

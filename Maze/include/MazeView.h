@@ -14,6 +14,8 @@
 #include "MazeRenderer.h"
 #include "ThreadSafeQueue.h"
 
+#include <mutex>
+
 class MazeController;
 struct MazeNode;
 

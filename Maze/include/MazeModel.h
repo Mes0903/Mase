@@ -13,9 +13,7 @@
 #include "MazeController.h"
 
 #include <vector>
-#include <memory>
 #include <utility>
-#include <mutex>
 #include <cstdint>
 
 inline constexpr int32_t MAZE_HEIGHT = 39;
