@@ -42,7 +42,8 @@ void MazeController::handleInput(const MazeAction actions)
     t1.detach();
     break;
   case MazeAction::G_RECURSION_DIVISION:
-    model_ptr__->generateMazeRecursionDivision(1, 1, MAZE_HEIGHT - 2, MAZE_WIDTH - 2);
+    t1 = std::thread(&MazeModel::generateMazeRecursionDivision, model_ptr__, 1, 1, MAZE_HEIGHT - 2, MAZE_WIDTH - 2, true);
+    t1.detach();
     break;
   case MazeAction::S_DFS:
     model_ptr__->solveMazeDFS(1, 0);

@@ -57,7 +57,7 @@ public:
   // maze generation and solving methods
   void generateMazePrim();
   void generateMazeRecursionBacktracker();
-  void generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx);
+  void generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx, bool is_first_call = false);
 
   bool solveMazeDFS(const int32_t y, const int32_t x);
   void solveMazeBFS();

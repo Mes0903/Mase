@@ -64,6 +64,9 @@ void MazeModel::resetWallAroundMaze()
         maze[y][x] = MazeElement::GROUND;    // Ground
     }
   }
+
+  controller_ptr__->setFrameMaze(maze);
+  controller_ptr__->setModelComplete();
 }
 
 /* --------------------maze generation methods -------------------- */
@@ -198,51 +201,55 @@ void MazeModel::generateMazeRecursionBacktracker()
   controller_ptr__->setModelComplete();
 }    // end generateMazeRecursionBacktracker()
 
-void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx)
+void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx, bool is_first_call)
 {
+  if (is_first_call)
+    resetWallAroundMaze();
+
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   int32_t width = rx - lx + 1, height = dy - uy + 1;
-  if (width < 2 && height < 2) return;
-  if (!inMaze__(MazeNode{ uy, lx, MazeElement::INVALID }, height - 1, width - 1))
-    return;
+  if (width < 3 || height < 3) return;
 
-  bool is_horizontal = (width <= height) ? true : false;
+  const bool cut_horizontal = (height > width);
   int32_t wall_index;
-  if (is_horizontal && height - 2 > 0) {
-    std::uniform_int_distribution<> h_dis(uy + 1, uy + height - 2);
-    wall_index = h_dis(gen);
-    for (int32_t i = lx; i <= rx; ++i) maze[wall_index][i] = MazeElement::WALL;    // 將這段距離都設圍牆壁
+  if (cut_horizontal) {
+    std::uniform_int_distribution<> h_dis(1, (height - 1) / 2);
+    wall_index = uy + 2 * h_dis(gen) - 1;
+
+    for (int32_t i = lx; i <= rx; ++i) {
+      maze[wall_index][i] = MazeElement::WALL;    // 將這段距離都設圍牆壁
+      controller_ptr__->enFramequeue(MazeNode{ wall_index, i, MazeElement::WALL });
+    }
+
+    std::uniform_int_distribution<> w_dis(1, (width - 1) / 2);
+    int32_t break_point = lx + 2 * w_dis(gen);
+    maze[wall_index][break_point] = MazeElement::GROUND;
+    controller_ptr__->enFramequeue(MazeNode{ wall_index, break_point, MazeElement::GROUND });
 
     generateMazeRecursionDivision(uy, lx, wall_index - 1, rx);    // 上面
     generateMazeRecursionDivision(wall_index + 1, lx, dy, rx);    // 下面
   }
-  else if (!is_horizontal && width - 2 > 0) {
-    std::uniform_int_distribution<> w_dis(lx + 1, lx + width - 2);
-    wall_index = w_dis(gen);
-    for (int32_t i = uy; i <= dy; ++i) maze[i][wall_index] = MazeElement::WALL;    // 將這段距離都設圍牆壁
+  else {
+    std::uniform_int_distribution<> w_dis(1, (width - 1) / 2);
+    wall_index = lx + 2 * w_dis(gen) - 1;
+
+    for (int32_t i = uy; i <= dy; ++i) {
+      maze[i][wall_index] = MazeElement::WALL;    // 將這段距離都設圍牆壁
+      controller_ptr__->enFramequeue(MazeNode{ i, wall_index, MazeElement::WALL });
+    }
+
+    std::uniform_int_distribution<> h_dis(1, (height - 1) / 2);
+    int32_t break_point = uy + 2 * h_dis(gen);
+    maze[break_point][wall_index] = MazeElement::GROUND;
+    controller_ptr__->enFramequeue(MazeNode{ break_point, wall_index, MazeElement::GROUND });
 
     generateMazeRecursionDivision(uy, lx, dy, wall_index - 1);    // 左邊
     generateMazeRecursionDivision(uy, wall_index + 1, dy, rx);    // 右邊
   }
-  else
-    return;
 
-  int32_t path_index;
-  if (is_horizontal) {
-    while (true) {
-      std::uniform_int_distribution<> w_dis(lx, lx + width - 1);
-      path_index = w_dis(gen);
-      // if (maze[wall_index - 1][path_index] + maze[wall_index + 1][path_index] + maze[wall_index][path_index - 1] + maze[wall_index][path_index + 1] <= 2 * MazeElement::WALL) break;
-    }
-    maze[wall_index][path_index] = MazeElement::GROUND;
-  }
-  else {
-    while (true) {
-      std::uniform_int_distribution<> h_dis(uy, uy + height - 1);
-      path_index = h_dis(gen);
-      // if (maze[path_index - 1][wall_index] + maze[path_index + 1][wall_index] + maze[path_index][wall_index - 1] + maze[path_index][wall_index + 1] <= 2 * MazeElement::WALL) break;
-    }
-    maze[path_index][wall_index] = MazeElement::GROUND;
+  if (is_first_call) {
+    setFlag__();
+    controller_ptr__->setModelComplete();
   }
 }    // end generateMazeRecursionDivision()
 
