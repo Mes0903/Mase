@@ -87,6 +87,7 @@ void MazeController::enFramequeue(const MazeNode &node)
 
 void MazeController::setModelComplete()
 {
+  view_ptr__->resetUpdateNode();
   model_complete_flag__.store(true);
 }
 bool MazeController::isModelComplete() const

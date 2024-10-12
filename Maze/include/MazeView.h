@@ -27,6 +27,7 @@ public:
 
   void render();
   void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
+  void resetUpdateNode();
   void enFramequeue(const MazeNode &node);
 
 private:

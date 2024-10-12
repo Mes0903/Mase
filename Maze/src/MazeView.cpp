@@ -28,6 +28,11 @@ void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
   render_maze__ = maze;
 }
 
+void MazeView::resetUpdateNode()
+{
+  update_node__ = MazeNode{ -1, -1, MazeElement::INVALID };
+}
+
 void MazeView::enFramequeue(const MazeNode &node)
 {
   maze_diff_queue__.enqueue(node);
