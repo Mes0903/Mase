@@ -15,7 +15,7 @@
 #include "MazeNode.h"
 
 MazeView::MazeView(uint32_t height, uint32_t width)
-    : render_maze__{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node__{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag__{ false }, renderer__{} {}
+    : render_maze__{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node__{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag__{ false }, grid_flag__{ true }, renderer__{} {}
 
 void MazeView::setController(MazeController *controller_ptr__)
 {
@@ -79,7 +79,8 @@ void MazeView::renderMaze__()
       else if (cell == MazeElement::EXPLORED)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(231, 158, 79, 255));
 
-      draw_list->AddRect(cell_min, cell_max, IM_COL32(100, 100, 100, 255));
+      if (grid_flag__)
+        draw_list->AddRect(cell_min, cell_max, IM_COL32(100, 100, 100, 255));
     }
   }
 }
@@ -94,6 +95,8 @@ void MazeView::drawGUI__()
   ImGui::BeginGroup();
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+  ImGui::Checkbox("Grid", &grid_flag__);
   ImGui::Checkbox("Stop", &stop_flag__);
   if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
   if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIMS);

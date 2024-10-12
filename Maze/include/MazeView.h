@@ -38,6 +38,7 @@ private:
   ThreadSafeQueue<MazeNode> maze_diff_queue__;
   MazeNode update_node__;
   bool stop_flag__;
+  bool grid_flag__;
   std::mutex maze_mutex__;
 
 private:
