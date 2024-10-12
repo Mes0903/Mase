@@ -12,8 +12,8 @@ MazeRenderer::MazeRenderer() : clear_color__(0.45f, 0.55f, 0.60f, 1.00f)
 
 MazeRenderer::~MazeRenderer()
 {
-  cleanupGLFW__();
   cleanupImGui__();
+  cleanupGLFW__();
 }
 
 void MazeRenderer::initGLFW__()
