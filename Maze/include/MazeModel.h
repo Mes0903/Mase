@@ -36,7 +36,8 @@ enum class MazeAction : int32_t {
   S_BFS,
   S_UCS_MANHATTAN,    // Cost Function 為 Two_Norm，所以距離終點越遠 Cost 越大
   S_UCS_TWO_NORM,    // Cost Function 為 Two_Norm，所以距離終點越遠 Cost 越大
-  S_GREEDY,
+  S_GREEDY_MANHATTAN,
+  S_GREEDY_TWO_NORM,
   S_ASTAR,
   S_ASTAR_INTERVAL
 };
@@ -60,7 +61,7 @@ public:
   bool solveMazeDFS(const int32_t y, const int32_t x, bool is_first_call = false);
   void solveMazeBFS();
   void solveMazeUCS(const MazeAction actions);
-  void solveMazeGreedy();
+  void solveMazeGreedy(const MazeAction actions);
   void solveMazeAStar(const MazeAction actions);
 
 public:

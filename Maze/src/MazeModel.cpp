@@ -428,48 +428,70 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
   }
 }    // end solveMazeUCS()
 
-void MazeModel::solveMazeGreedy()
+void MazeModel::solveMazeGreedy(const MazeAction actions)
 {
-  struct Node {
-    int32_t weight;    // 權重為 Two_Norm 平方 (Heuristic function)
-    int32_t y;    // y座標
-    int32_t x;    // x座標
-    Node(int32_t weight, int32_t y, int32_t x) : weight(weight), y(y), x(x) {}
-    bool operator>(const Node &other) const { return weight > other.weight; }    // priority比大小只看權重
-    bool operator<(const Node &other) const { return weight < other.weight; }    // priority比大小只看權重
+  cleanExplored();
+
+  struct TraceNode {
+    int32_t weight;
+    int32_t y;
+    int32_t x;
+    TraceNode(int32_t weight, int32_t y, int32_t x) : weight(weight), y(y), x(x) {}
+    bool operator>(const TraceNode &other) const { return weight > other.weight; }
+    bool operator<(const TraceNode &other) const { return weight < other.weight; }
   };
 
-  std::priority_queue<Node, std::vector<Node>, std::greater<Node>> result;    // 待走的結點，greater代表小的會在前面，由小排到大
-  result.push(Node(pow_two_norm(BEGIN_Y, BEGIN_X), BEGIN_Y, BEGIN_X));    // 將起點加進去
-
-  while (true) {
-    if (result.empty())
-      return;    // 沒找到目標
-    const auto temp = result.top();    // 目前最優先的結點
-    result.pop();    // 取出結點判斷
-
-    if (temp.y == END_Y && temp.x == END_X) {
-      maze[temp.y][temp.x] = MazeElement::END;    // 終點
-
-      return;    // 如果取出的點是終點就return
+  auto calcWeight = [&](const int32_t y, const int32_t x) -> int32_t {
+    switch (actions) {
+    case MazeAction::S_GREEDY_MANHATTAN:
+      return std::abs(END_X - x) + std::abs(END_Y - y);    // 權重為曼哈頓距離
+    default:
+      return pow_two_norm(y, x);    // 權重為 two_norm
     }
-    else if (maze[temp.y][temp.x] == MazeElement::GROUND) {
-      if (temp.y == BEGIN_Y && temp.x == BEGIN_X)
-        maze[temp.y][temp.x] = MazeElement::BEGIN;    // 起點
-      else {
-        maze[temp.y][temp.x] = MazeElement::EXPLORED;    // 探索過的點要改EXPLORED
-      }
+  };
 
-      for (const auto &dir : dir_vec) {
-        const int32_t y = temp.y + dir.first, x = temp.x + dir.second;
+  std::vector<std::vector<MazeNode>> parent(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;    // 待走的結點，greater代表小的會在前面，由小排到大
+  int32_t weight = calcWeight(BEGIN_Y, BEGIN_X);
+  path.push(TraceNode(weight, BEGIN_Y, BEGIN_X));
 
-        if (inMaze__(y, x)) {
-          if (maze[y][x] == MazeElement::GROUND)    // 如果這個結點還沒走過，就把他加到待走的結點裡
-            result.push(Node(pow_two_norm(y, x), y, x));
+  while (!path.empty()) {
+    const auto current = std::move(path.top());
+    path.pop();
+
+    for (const auto &dir : dir_vec) {
+      const int32_t target_y = current.y + dir.first;
+      const int32_t target_x = current.x + dir.second;
+
+      if (!inMaze__(target_y, target_x))
+        continue;
+
+      if (maze[target_y][target_x] == MazeElement::END) {
+        int32_t ans_y = current.y;
+        int32_t ans_x = current.x;
+
+        while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
+          maze[ans_y][ans_x] = MazeElement::ANSWER;
+          controller_ptr__->enFramequeue(maze);
+          const auto [parent_y, parent_x, _] = parent[ans_y][ans_x];
+          ans_y = parent_y;
+          ans_x = parent_x;
         }
+
+        controller_ptr__->setModelComplete();
+        return;    // 如果取出的點是終點就return
+      }
+
+      if (maze[target_y][target_x] == MazeElement::GROUND) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
+        maze[target_y][target_x] = MazeElement::EXPLORED;
+        controller_ptr__->enFramequeue(maze);
+
+        weight = calcWeight(target_y, target_x);
+        parent[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
+        path.push(TraceNode(weight, target_y, target_x));    // 加入節點
       }
     }
-  }    // end while
+  }
 }    // end solveMazeGreedy()
 
 void MazeModel::solveMazeAStar(const MazeAction actions)
