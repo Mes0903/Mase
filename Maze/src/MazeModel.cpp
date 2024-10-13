@@ -320,7 +320,7 @@ void MazeModel::solveMazeBFS()
 {
   cleanExplored();
 
-  std::vector<std::vector<MazeNode>> parent(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
   std::queue<std::pair<int32_t, int32_t>> path;    // 存節點的 qeque
   path.push(std::make_pair(BEGIN_Y, BEGIN_X));    // 將一開始的節點加入 qeque
 
@@ -342,7 +342,7 @@ void MazeModel::solveMazeBFS()
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
           controller_ptr__->enFramequeue(maze);
-          const auto [parent_y, parent_x, _] = parent[ans_y][ans_x];
+          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
         }
@@ -355,7 +355,7 @@ void MazeModel::solveMazeBFS()
         maze[target_y][target_x] = MazeElement::EXPLORED;    // 那就探索他，改 EXPLORED
         controller_ptr__->enFramequeue(maze);
 
-        parent[target_y][target_x] = { current_y, current_x, MazeElement::EXPLORED };
+        parent_map[target_y][target_x] = { current_y, current_x, MazeElement::EXPLORED };
         path.push(std::make_pair(target_y, target_x));    // 沒找到節點就加入節點
       }
     }
@@ -384,7 +384,8 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
     }
   };
 
-  std::vector<std::vector<MazeNode>> parent(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<int32_t>> cost_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, 0));
   std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;    // 待走的結點，greater代表小的會在前面，由小排到大
   int32_t weight = calcWeight(BEGIN_Y, BEGIN_X);
   path.push(TraceNode(weight, BEGIN_Y, BEGIN_X));
@@ -396,6 +397,8 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
     for (const auto &dir : dir_vec) {
       const int32_t target_y = current.y + dir.first;
       const int32_t target_x = current.x + dir.second;
+      weight = calcWeight(target_y, target_x);
+      TraceNode target_node(current.weight + weight, target_y, target_x);
 
       if (!inMaze__(target_y, target_x))
         continue;
@@ -407,7 +410,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
           controller_ptr__->enFramequeue(maze);
-          const auto [parent_y, parent_x, _] = parent[ans_y][ans_x];
+          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
         }
@@ -416,13 +419,19 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
         return;    // 如果取出的點是終點就return
       }
 
-      if (maze[target_y][target_x] == MazeElement::GROUND) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
+      if (maze[target_y][target_x] == MazeElement::GROUND) {
         maze[target_y][target_x] = MazeElement::EXPLORED;
         controller_ptr__->enFramequeue(maze);
 
-        weight = calcWeight(target_y, target_x);
-        parent[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
-        path.push(TraceNode(current.weight + weight, target_y, target_x));    // 加入節點
+        cost_map[target_y][target_x] = target_node.weight;
+        parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
+        path.push(target_node);    // 加入節點
+      }
+      else if (maze[target_y][target_x] == MazeElement::EXPLORED) {
+        if (cost_map[target_y][target_x] > target_node.weight) {
+          cost_map[target_y][target_x] = target_node.weight;
+          parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
+        }
       }
     }
   }
@@ -450,7 +459,7 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
     }
   };
 
-  std::vector<std::vector<MazeNode>> parent(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
   std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;    // 待走的結點，greater代表小的會在前面，由小排到大
   int32_t weight = calcWeight(BEGIN_Y, BEGIN_X);
   path.push(TraceNode(weight, BEGIN_Y, BEGIN_X));
@@ -473,7 +482,7 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
           controller_ptr__->enFramequeue(maze);
-          const auto [parent_y, parent_x, _] = parent[ans_y][ans_x];
+          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
         }
@@ -487,7 +496,7 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
         controller_ptr__->enFramequeue(maze);
 
         weight = calcWeight(target_y, target_x);
-        parent[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
+        parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
         path.push(TraceNode(weight, target_y, target_x));    // 加入節點
       }
     }
