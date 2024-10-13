@@ -77,7 +77,7 @@ private:
   void setFlag__();
   void setBeginPoint__(MazeNode &node);
 
-  int32_t pow_two_norm(const int32_t y, const int32_t x);
+  int32_t twoNorm__(const int32_t y, const int32_t x);
 };
 
 #endif

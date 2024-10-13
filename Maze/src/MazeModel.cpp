@@ -380,7 +380,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
     case MazeAction::S_UCS_MANHATTAN:
       return std::abs(END_X - x) + std::abs(END_Y - y);    // 權重為曼哈頓距離
     default:
-      return pow_two_norm(y, x);    // 權重為 two_norm
+      return twoNorm__(y, x);    // 權重為 two_norm
     }
   };
 
@@ -446,7 +446,7 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
     case MazeAction::S_GREEDY_MANHATTAN:
       return std::abs(END_X - x) + std::abs(END_Y - y);    // 權重為曼哈頓距離
     default:
-      return pow_two_norm(y, x);    // 權重為 two_norm
+      return twoNorm__(y, x);    // 權重為 two_norm
     }
   };
 
@@ -521,7 +521,7 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
   }
   else if (actions == MazeAction::S_ASTAR_INTERVAL) {
     cost = (static_cast<int32_t>(BEGIN_Y / interval_y) < static_cast<int32_t>(BEGIN_X / interval_x)) ? (10 - static_cast<int32_t>(BEGIN_Y / interval_y)) * 8 : (10 - static_cast<int32_t>(BEGIN_X / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
-    weight = cost + pow_two_norm(BEGIN_Y, BEGIN_X);    // 權重以區間(Cost) + Two_Norm 計算
+    weight = cost + twoNorm__(BEGIN_Y, BEGIN_X);    // 權重以區間(Cost) + Two_Norm 計算
   }
   result.push(Node(cost, weight, BEGIN_Y, BEGIN_X));    // 將起點加進去
 
@@ -554,7 +554,7 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
             }
             else if (actions == MazeAction::S_ASTAR_INTERVAL) {
               cost = (static_cast<int32_t>(y / interval_y) < static_cast<int32_t>(x / interval_x)) ? temp.__Cost + (10 - static_cast<int32_t>(y / interval_y)) * 8 : temp.__Cost + (10 - static_cast<int32_t>(x / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
-              weight = cost + pow_two_norm(y, x);    // heuristic function 設為 two_norm 平方
+              weight = cost + twoNorm__(y, x);    // heuristic function 設為 two_norm 平方
             }
             result.push(Node(cost, weight, y, x));
           }
@@ -604,7 +604,7 @@ void MazeModel::setBeginPoint__(MazeNode &node)
   controller_ptr__->enFramequeue(maze);
 }    // end setBeginPoint__
 
-int32_t MazeModel::pow_two_norm(const int32_t y, const int32_t x)
+int32_t MazeModel::twoNorm__(const int32_t y, const int32_t x)
 {
   return pow((END_Y - y), 2) + pow((END_X - x), 2);
 }
