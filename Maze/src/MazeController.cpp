@@ -28,8 +28,8 @@ void MazeController::handleInput(const MazeAction actions)
     model_ptr__->emptyMap();
     setModelComplete();
     break;
-  case MazeAction::G_CLEAN_EXPLORER:
-    model_ptr__->cleanExplorer();
+  case MazeAction::G_CLEAN_EXPLORED:
+    model_ptr__->cleanExplored();
     setModelComplete();
     break;
   case MazeAction::G_PRIMS:

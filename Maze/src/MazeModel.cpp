@@ -30,7 +30,7 @@ void MazeModel::emptyMap()
   setFlag__();
 }
 
-void MazeModel::cleanExplorer()
+void MazeModel::cleanExplored()
 {
   for (auto &row : maze) {
     std::replace(row.begin(), row.end(), MazeElement::EXPLORED, MazeElement::GROUND);
@@ -147,7 +147,7 @@ void MazeModel::generateMazePrim()
   }
 
   setFlag__();
-  cleanExplorer();
+  cleanExplored();
   controller_ptr__->setModelComplete();
 }    // end generateMazePrim()
 
@@ -201,7 +201,7 @@ void MazeModel::generateMazeRecursionBacktracker()
   }
 
   setFlag__();
-  cleanExplorer();
+  cleanExplored();
   controller_ptr__->setModelComplete();
 }    // end generateMazeRecursionBacktracker()
 
@@ -253,7 +253,7 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
 
   if (is_first_call) {
     setFlag__();
-    cleanExplorer();
+    cleanExplored();
     controller_ptr__->setModelComplete();
   }
 }    // end generateMazeRecursionDivision()
@@ -266,7 +266,7 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
     return true;
 
   if (is_first_call) {
-    cleanExplorer();
+    cleanExplored();
   }
   else {
     maze[y][x] = MazeElement::EXPLORED;    // 探索過的點
@@ -304,7 +304,7 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
 
 void MazeModel::solveMazeBFS()
 {
-  cleanExplorer();
+  cleanExplored();
 
   std::vector<std::vector<MazeNode>> parent(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
   std::queue<std::pair<int32_t, int32_t>> path;    // 存節點的 qeque

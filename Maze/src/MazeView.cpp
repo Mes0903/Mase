@@ -92,7 +92,7 @@ void MazeView::drawGUI__()
   ImGui::Checkbox("Grid", &grid_flag__);
   ImGui::Checkbox("Stop", &stop_flag__);
   if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
-  if (ImGui::Button("Clean Explorer")) controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORER);
+  if (ImGui::Button("Clean Explored")) controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORED);
   if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIMS);
   if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
   if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_DIVISION);

@@ -27,7 +27,7 @@ inline constexpr std::pair<int32_t, int32_t> dir_vec[4]{ { 1, 0 }, { 0, 1 }, { -
 
 enum class MazeAction : int32_t {
   G_CLEANALL,
-  G_CLEAN_EXPLORER,
+  G_CLEAN_EXPLORED,
   G_PRIMS,
   G_RECURSION_BACKTRACKER,
   G_RECURSION_DIVISION,
@@ -49,7 +49,7 @@ public:
   void setController(MazeController *controller_ptr);
 
   void emptyMap();
-  void cleanExplorer();
+  void cleanExplored();
   void resetWallAroundMaze();
 
   // maze generation and solving methods
