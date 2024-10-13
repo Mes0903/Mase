@@ -304,6 +304,9 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
 
 void MazeModel::solveMazeBFS()
 {
+  cleanExplorer();
+
+  std::vector<std::vector<MazeNode>> parent(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
   std::queue<std::pair<int32_t, int32_t>> path;    // 存節點的 qeque
   path.push(std::make_pair(BEGIN_Y, BEGIN_X));    // 將一開始的節點加入 qeque
 
@@ -314,14 +317,31 @@ void MazeModel::solveMazeBFS()
     for (const auto &dir : dir_vec) {    // 遍歷上下左右
       const int32_t target_y = current_y + dir.first;
       const int32_t target_x = current_x + dir.second;
-      if (!inMaze__(target_y, target_x) || maze[target_y][target_x] == MazeElement::WALL)
+
+      if (!inMaze__(target_y, target_x))
         continue;
 
-      if (maze[target_y][target_x] == MazeElement::END)
+      if (maze[target_y][target_x] == MazeElement::END) {
+        int32_t ans_y = current_y;
+        int32_t ans_x = current_x;
+
+        while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
+          maze[ans_y][ans_x] = MazeElement::ANSWER;
+          controller_ptr__->enFramequeue(maze);
+          const auto [parent_y, parent_x, _] = parent[ans_y][ans_x];
+          ans_y = parent_y;
+          ans_x = parent_x;
+        }
+
+        controller_ptr__->setModelComplete();
         return;
+      }
 
       if (maze[target_y][target_x] == MazeElement::GROUND) {    // 而且如果這個節點還沒被探索過，也不是牆壁
         maze[target_y][target_x] = MazeElement::EXPLORED;    // 那就探索他，改 EXPLORED
+        controller_ptr__->enFramequeue(maze);
+
+        parent[target_y][target_x] = { current_y, current_x, MazeElement::EXPLORED };
         path.push(std::make_pair(target_y, target_x));    // 沒找到節點就加入節點
       }
     }
