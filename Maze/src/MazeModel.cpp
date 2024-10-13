@@ -73,12 +73,13 @@ void MazeModel::resetWallAroundMaze()
 
 /* --------------------maze generation methods -------------------- */
 
-void MazeModel::generateMazePrim()
+void MazeModel::generateMazePrim(const MazeAction actions)
 {
   initMaze__();
 
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
+  std::vector<MazeNode> break_list;    // 已探索過的節點列表
   std::vector<MazeNode> candidate_list;    // 待找的牆的列表
 
   {
@@ -111,6 +112,7 @@ void MazeModel::generateMazePrim()
 
       // 如果左右都探索過了，或上下都探索過了，就把這個牆留著，並且加到確定是牆壁的 vector 裡
       if ((up_element == MazeElement::EXPLORED && down_element == MazeElement::EXPLORED) || (left_element == MazeElement::EXPLORED && right_element == MazeElement::EXPLORED)) {
+        break_list.emplace_back(current_node);
         candidate_list.erase(candidate_list.begin() + random_index);    // 如果「上下都走過」或「左右都走過」，那麼就把這個牆留著
       }
       else {
@@ -143,6 +145,18 @@ void MazeModel::generateMazePrim()
 
         controller_ptr__->enFramequeue(maze);
       }
+    }
+  }
+
+  if (actions == MazeAction::G_PRIM_BREAK) {
+    std::shuffle(break_list.begin(), break_list.end(), gen);
+    int wall_num = break_list.size();
+    std::uniform_int_distribution<> dis(0, wall_num / 5 - 1);
+    for (int i = dis(gen); i > 0; --i) {
+      std::uniform_int_distribution<> wall_dis(0, break_list.size() - 1);
+      int32_t random_index = wall_dis(gen);
+      maze[break_list[random_index].y][break_list[random_index].x] = MazeElement::GROUND;
+      break_list.erase(break_list.begin() + random_index);
     }
   }
 
@@ -350,32 +364,37 @@ void MazeModel::solveMazeBFS()
 
 void MazeModel::solveMazeUCS(const MazeAction actions)
 {
-  struct Node {
-    int32_t __Weight;    // 權重 (Cost Function)
+  struct TraceNode {
+    int32_t weight;    // 權重 (Cost Function)
     int32_t y;    // y座標
     int32_t x;    // x座標
-    Node(int32_t weight, int32_t y, int32_t x) : __Weight(weight), y(y), x(x) {}
-    bool operator>(const Node &other) const { return __Weight > other.__Weight; }    // priority比大小只看權重
-    bool operator<(const Node &other) const { return __Weight < other.__Weight; }    // priority比大小只看權重
+    TraceNode(int32_t weight, int32_t y, int32_t x) : weight(weight), y(y), x(x) {}
+    bool operator>(const TraceNode &other) const { return weight > other.weight; }    // priority比大小只看權重
+    bool operator<(const TraceNode &other) const { return weight < other.weight; }    // priority比大小只看權重
   };
 
-  std::priority_queue<Node, std::vector<Node>, std::greater<Node>> result;    // 待走的結點，greater代表小的會在前面，由小排到大
-  int32_t weight{};    // 用來計算的權重
+  std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> result;    // 待走的結點，greater代表小的會在前面，由小排到大
+  int32_t weight;    // 用來計算的權重
 
   switch (actions) {    // 起點
   case MazeAction::S_UCS_MANHATTAN:
-    weight = abs(END_X - BEGIN_X) + abs(END_Y - BEGIN_Y);    // 權重為曼哈頓距離
+    weight = std::abs(END_X - BEGIN_X) + std::abs(END_Y - BEGIN_Y);    // 權重為曼哈頓距離
     break;
   case MazeAction::S_UCS_TWO_NORM:
     weight = pow_two_norm(BEGIN_Y, BEGIN_X);    // 權重為 two_norm
     break;
   case MazeAction::S_UCS_INTERVAL:
-    constexpr int32_t interval_y = MAZE_HEIGHT / 10, interval_x = MAZE_WIDTH / 10;    // 分 10 個區間
-    weight = (static_cast<int32_t>(BEGIN_Y / interval_y) < static_cast<int32_t>(BEGIN_X / interval_x)) ? (10 - static_cast<int32_t>(BEGIN_Y / interval_y)) : (10 - static_cast<int32_t>(BEGIN_X / interval_x));    // 權重以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎權重，再乘以1000
+    constexpr int32_t interval_y = MAZE_HEIGHT / 10;
+    constexpr int32_t interval_x = MAZE_WIDTH / 10;    // 分 10 個區間
+
+    if ((BEGIN_Y / interval_y) < (BEGIN_X / interval_x))
+      weight = (10 - (BEGIN_Y / interval_y)) * 1000;
+    else
+      weight = (10 - (BEGIN_X / interval_x)) * 1000;
     break;
   }
 
-  result.push(Node(weight, BEGIN_Y, BEGIN_Y));    // 將起點加進去
+  result.push(TraceNode(weight, BEGIN_Y, BEGIN_X));    // 將起點加進去
 
   while (true) {
     if (result.empty())
@@ -384,9 +403,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
     const auto temp = result.top();    // 目前最優先的結點
     result.pop();    // 取出結點判斷
 
-    if (temp.y == END_Y && temp.x == END_X) {
-      maze[temp.y][temp.x] = MazeElement::END;    // 終點
-
+    if (maze[temp.y][temp.x] == MazeElement::END) {
       return;    // 如果取出的點是終點就return
     }
     else if (maze[temp.y][temp.x] == MazeElement::GROUND) {
@@ -413,7 +430,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
               weight = (static_cast<int32_t>(y / interval_y) < static_cast<int32_t>(x / interval_x)) ? (10 - static_cast<int32_t>(y / interval_y)) : (10 - static_cast<int32_t>(x / interval_x));    // 權重為區間
               break;
             }
-            result.push(Node(temp.__Weight + weight, y, x));    // 加入節點
+            result.push(TraceNode(temp.weight + weight, y, x));    // 加入節點
           }
         }
       }    // end for
@@ -424,12 +441,12 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
 void MazeModel::solveMazeGreedy()
 {
   struct Node {
-    int32_t __Weight;    // 權重為 Two_Norm 平方 (Heuristic function)
+    int32_t weight;    // 權重為 Two_Norm 平方 (Heuristic function)
     int32_t y;    // y座標
     int32_t x;    // x座標
-    Node(int32_t weight, int32_t y, int32_t x) : __Weight(weight), y(y), x(x) {}
-    bool operator>(const Node &other) const { return __Weight > other.__Weight; }    // priority比大小只看權重
-    bool operator<(const Node &other) const { return __Weight < other.__Weight; }    // priority比大小只看權重
+    Node(int32_t weight, int32_t y, int32_t x) : weight(weight), y(y), x(x) {}
+    bool operator>(const Node &other) const { return weight > other.weight; }    // priority比大小只看權重
+    bool operator<(const Node &other) const { return weight < other.weight; }    // priority比大小只看權重
   };
 
   std::priority_queue<Node, std::vector<Node>, std::greater<Node>> result;    // 待走的結點，greater代表小的會在前面，由小排到大
@@ -474,12 +491,12 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
 
   struct Node {
     int32_t __Cost;    // Cost Function 有兩種，以區間計算，每個區間 Cost 差10
-    int32_t __Weight;    // 權重以區間(Cost Function) + Two_Norm 平方(Heuristic Function) 計算，每個區間 Cost 差1000
+    int32_t weight;    // 權重以區間(Cost Function) + Two_Norm 平方(Heuristic Function) 計算，每個區間 Cost 差1000
     int32_t y;    // y座標
     int32_t x;    // x座標
-    Node(int32_t cost, int32_t weight, int32_t y, int32_t x) : __Cost(cost), __Weight(weight), y(y), x(x) {}
-    bool operator>(const Node &other) const { return __Weight > other.__Weight; }    // priority比大小只看權重
-    bool operator<(const Node &other) const { return __Weight < other.__Weight; }    // priority比大小只看權重
+    Node(int32_t cost, int32_t weight, int32_t y, int32_t x) : __Cost(cost), weight(weight), y(y), x(x) {}
+    bool operator>(const Node &other) const { return weight > other.weight; }    // priority比大小只看權重
+    bool operator<(const Node &other) const { return weight < other.weight; }    // priority比大小只看權重
   };
 
   std::priority_queue<Node, std::vector<Node>, std::greater<Node>> result;    // 待走的結點，greater代表小的會在前面，由小排到大

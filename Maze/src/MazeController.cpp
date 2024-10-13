@@ -32,8 +32,9 @@ void MazeController::handleInput(const MazeAction actions)
     model_ptr__->cleanExplored();
     setModelComplete();
     break;
-  case MazeAction::G_PRIMS:
-    t1 = std::thread(&MazeModel::generateMazePrim, model_ptr__);
+  case MazeAction::G_PRIM:
+  case MazeAction::G_PRIM_BREAK:
+    t1 = std::thread(&MazeModel::generateMazePrim, model_ptr__, actions);
     t1.detach();
     break;
   case MazeAction::G_RECURSION_BACKTRACKER:
@@ -53,13 +54,7 @@ void MazeController::handleInput(const MazeAction actions)
     t1.detach();
     break;
   case MazeAction::S_UCS_MANHATTAN:
-    // model_ptr__->solveMazeUCS(actions);
-    setModelComplete();
-    break;
   case MazeAction::S_UCS_TWO_NORM:
-    // model_ptr__->solveMazeUCS(actions);
-    setModelComplete();
-    break;
   case MazeAction::S_UCS_INTERVAL:
     // model_ptr__->solveMazeUCS(actions);
     setModelComplete();
@@ -69,9 +64,6 @@ void MazeController::handleInput(const MazeAction actions)
     setModelComplete();
     break;
   case MazeAction::S_ASTAR:
-    // model_ptr__->solveMazeAStar(actions);
-    setModelComplete();
-    break;
   case MazeAction::S_ASTAR_INTERVAL:
     // model_ptr__->solveMazeAStar(actions);
     setModelComplete();

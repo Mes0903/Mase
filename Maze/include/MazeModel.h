@@ -28,7 +28,8 @@ inline constexpr std::pair<int32_t, int32_t> dir_vec[4]{ { 1, 0 }, { 0, 1 }, { -
 enum class MazeAction : int32_t {
   G_CLEANALL,
   G_CLEAN_EXPLORED,
-  G_PRIMS,
+  G_PRIM,
+  G_PRIM_BREAK,
   G_RECURSION_BACKTRACKER,
   G_RECURSION_DIVISION,
   S_DFS,
@@ -53,7 +54,7 @@ public:
   void resetWallAroundMaze();
 
   // maze generation and solving methods
-  void generateMazePrim();
+  void generateMazePrim(const MazeAction actions);
   void generateMazeRecursionBacktracker();
   void generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx, bool is_first_call = false);
 
