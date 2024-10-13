@@ -74,9 +74,9 @@ void MazeController::handleInput(const MazeAction actions)
   }
 }
 
-void MazeController::enFramequeue(const std::vector<std::vector<MazeElement>> &maze)
+void MazeController::enFramequeue(const std::vector<std::vector<MazeElement>> &maze, const MazeNode &node)
 {
-  view_ptr__->enFramequeue(maze);
+  view_ptr__->enFramequeue(maze, node);
 }
 
 void MazeController::setModelComplete()

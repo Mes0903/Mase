@@ -121,7 +121,7 @@ void MazeModel::generateMazePrim(const MazeAction actions)
         maze[current_node.y][current_node.x] = MazeElement::EXPLORED;
         candidate_list.erase(candidate_list.begin() + random_index);
 
-        controller_ptr__->enFramequeue(maze);
+        controller_ptr__->enFramequeue(maze, current_node);
 
         if (up_element == MazeElement::EXPLORED && down_element == MazeElement::GROUND)    // 上面探索過，下面還沒
           ++current_node.y;    // 將目前的節點改成牆壁 "下面" 那個節點
@@ -143,7 +143,7 @@ void MazeModel::generateMazePrim(const MazeAction actions)
           }
         }
 
-        controller_ptr__->enFramequeue(maze);
+        controller_ptr__->enFramequeue(maze, current_node);
       }
     }
   }
@@ -204,11 +204,11 @@ void MazeModel::generateMazeRecursionBacktracker()
 
       current_node.node.element = MazeElement::EXPLORED;
       maze[current_node.node.y + dir_y][current_node.node.x + dir_x] = MazeElement::EXPLORED;
-      controller_ptr__->enFramequeue(maze);
+      controller_ptr__->enFramequeue(maze, current_node.node);
 
       target_node.node.element = MazeElement::EXPLORED;
       maze[target_node.node.y][target_node.node.x] = MazeElement::EXPLORED;
-      controller_ptr__->enFramequeue(maze);
+      controller_ptr__->enFramequeue(maze, target_node.node);
 
       candidate_list.push(target_node);
     }
@@ -236,13 +236,13 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
 
     for (int32_t i = lx; i <= rx; ++i) {
       maze[wall_index][i] = MazeElement::WALL;    // 將這段距離都設圍牆壁
-      controller_ptr__->enFramequeue(maze);
+      controller_ptr__->enFramequeue(maze, MazeNode{ wall_index, i, MazeElement::WALL });
     }
 
     std::uniform_int_distribution<> w_dis(1, (width - 1) / 2);
     int32_t break_point = lx + 2 * w_dis(gen);
     maze[wall_index][break_point] = MazeElement::GROUND;
-    controller_ptr__->enFramequeue(maze);
+    controller_ptr__->enFramequeue(maze, MazeNode{ wall_index, break_point, MazeElement::GROUND });
 
     generateMazeRecursionDivision(uy, lx, wall_index - 1, rx);    // 上面
     generateMazeRecursionDivision(wall_index + 1, lx, dy, rx);    // 下面
@@ -253,13 +253,13 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
 
     for (int32_t i = uy; i <= dy; ++i) {
       maze[i][wall_index] = MazeElement::WALL;    // 將這段距離都設圍牆壁
-      controller_ptr__->enFramequeue(maze);
+      controller_ptr__->enFramequeue(maze, MazeNode{ i, wall_index, MazeElement::WALL });
     }
 
     std::uniform_int_distribution<> h_dis(1, (height - 1) / 2);
     int32_t break_point = uy + 2 * h_dis(gen);
     maze[break_point][wall_index] = MazeElement::GROUND;
-    controller_ptr__->enFramequeue(maze);
+    controller_ptr__->enFramequeue(maze, MazeNode{ break_point, wall_index, MazeElement::GROUND });
 
     generateMazeRecursionDivision(uy, lx, dy, wall_index - 1);    // 左邊
     generateMazeRecursionDivision(uy, wall_index + 1, dy, rx);    // 右邊
@@ -284,7 +284,7 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
   }
   else {
     maze[y][x] = MazeElement::EXPLORED;    // 探索過的點
-    controller_ptr__->enFramequeue(maze);
+    controller_ptr__->enFramequeue(maze, MazeNode{ y, x, MazeElement::EXPLORED });
   }
 
   for (const auto &[dir_y, dir_x] : dir_vec) {    // 上下左右
@@ -300,7 +300,7 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
     if (solveMazeDFS(target_y, target_x)) {    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
       if (maze[target_y][target_x] != MazeElement::END) {
         maze[target_y][target_x] = MazeElement::ANSWER;
-        controller_ptr__->enFramequeue(maze);
+        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::ANSWER });
       }
 
       if (is_first_call)
@@ -341,7 +341,7 @@ void MazeModel::solveMazeBFS()
 
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
-          controller_ptr__->enFramequeue(maze);
+          controller_ptr__->enFramequeue(maze, MazeNode{ ans_y, ans_x, MazeElement::ANSWER });
           const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
@@ -353,7 +353,7 @@ void MazeModel::solveMazeBFS()
 
       if (maze[target_y][target_x] == MazeElement::GROUND) {    // 而且如果這個節點還沒被探索過，也不是牆壁
         maze[target_y][target_x] = MazeElement::EXPLORED;    // 那就探索他，改 EXPLORED
-        controller_ptr__->enFramequeue(maze);
+        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
 
         parent_map[target_y][target_x] = { current_y, current_x, MazeElement::EXPLORED };
         path.push(std::make_pair(target_y, target_x));    // 沒找到節點就加入節點
@@ -421,7 +421,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
 
       if (maze[target_y][target_x] == MazeElement::GROUND) {
         maze[target_y][target_x] = MazeElement::EXPLORED;
-        controller_ptr__->enFramequeue(maze);
+        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
 
         cost_map[target_y][target_x] = target_node.weight;
         parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
@@ -460,6 +460,7 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
   };
 
   std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<int32_t>> cost_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, 0));
   std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;    // 待走的結點，greater代表小的會在前面，由小排到大
   int32_t weight = calcWeight(BEGIN_Y, BEGIN_X);
   path.push(TraceNode(weight, BEGIN_Y, BEGIN_X));
@@ -471,6 +472,8 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
     for (const auto &dir : dir_vec) {
       const int32_t target_y = current.y + dir.first;
       const int32_t target_x = current.x + dir.second;
+      weight = calcWeight(target_y, target_x);
+      TraceNode target_node(weight, target_y, target_x);
 
       if (!inMaze__(target_y, target_x))
         continue;
@@ -491,13 +494,19 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
         return;    // 如果取出的點是終點就return
       }
 
-      if (maze[target_y][target_x] == MazeElement::GROUND) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
+      if (maze[target_y][target_x] == MazeElement::GROUND) {
         maze[target_y][target_x] = MazeElement::EXPLORED;
-        controller_ptr__->enFramequeue(maze);
+        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
 
-        weight = calcWeight(target_y, target_x);
+        cost_map[target_y][target_x] = target_node.weight;
         parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
-        path.push(TraceNode(weight, target_y, target_x));    // 加入節點
+        path.push(target_node);    // 加入節點
+      }
+      else if (maze[target_y][target_x] == MazeElement::EXPLORED) {
+        if (cost_map[target_y][target_x] > target_node.weight) {
+          cost_map[target_y][target_x] = target_node.weight;
+          parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
+        }
       }
     }
   }

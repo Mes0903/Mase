@@ -27,17 +27,22 @@ void MazeView::resetUpdateNode()
   update_node__ = MazeNode{ -1, -1, MazeElement::INVALID };
 }
 
-void MazeView::enFramequeue(const std::vector<std::vector<MazeElement>> &maze)
+void MazeView::enFramequeue(const std::vector<std::vector<MazeElement>> &maze, const MazeNode &node)
 {
   maze_queue__.enqueue(maze);
+  update_node_queue__.enqueue(node);
 }
 
 void MazeView::deFramequeue__()
 {
   std::optional<decltype(render_maze__)> opt_maze = maze_queue__.dequeue();
+  std::optional<MazeNode> opt_node = update_node_queue__.dequeue();
   if (opt_maze.has_value()) {
     std::lock_guard<std::mutex> lock(maze_mutex__);
     render_maze__ = std::move(*opt_maze);
+
+    if (opt_node.has_value())
+      update_node__ = std::move(*opt_node);
   }
   else if (controller_ptr__->isModelComplete()) {
     controller_ptr__->setViewComplete();
