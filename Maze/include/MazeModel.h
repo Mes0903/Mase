@@ -70,12 +70,12 @@ private:
   MazeController *controller_ptr__;
 
 private:
-  bool inMaze__(const MazeNode &node, const int32_t delta_y, const int32_t delta_x);
+  bool inWall__(const int32_t y, const int32_t x);
+  bool inMaze__(const int32_t y, const int32_t x);
   void initMaze__();
   void setFlag__();
   void setBeginPoint__(MazeNode &node);
 
-  bool is_in_maze(const int32_t y, const int32_t x);
   int32_t pow_two_norm(const int32_t y, const int32_t x);
 };
 

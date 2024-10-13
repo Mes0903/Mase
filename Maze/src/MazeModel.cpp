@@ -86,7 +86,7 @@ void MazeModel::generateMazePrim()
     std::shuffle(direction_order.begin(), direction_order.end(), gen);
     for (const int32_t index : direction_order) {
       const auto [dir_y, dir_x] = dir_vec[index];
-      if (inMaze__(seed_node, dir_y, dir_x))
+      if (inWall__(seed_node.y + dir_y, seed_node.x + dir_x))
         candidate_list.emplace_back(MazeNode{ seed_node.y + dir_y, seed_node.x + dir_x, maze[seed_node.y + dir_y][seed_node.x + dir_x] });    // 將起點四周在迷宮內的牆加入 candidate_list 列表中
     }
   }
@@ -98,13 +98,13 @@ void MazeModel::generateMazePrim()
     MazeElement up_element{ MazeElement::INVALID }, down_element{ MazeElement::INVALID }, left_element{ MazeElement::INVALID }, right_element{ MazeElement::INVALID };    // 目前這個牆的上下左右結點
     // 如果抽到的那格確定是牆再去判斷，有時候會有一個牆重複被加到清單裡的情形
     if (current_node.element == MazeElement::WALL) {
-      if (inMaze__(current_node, -1, 0))
+      if (inWall__(current_node.y - 1, current_node.x))
         up_element = maze[current_node.y - 1][current_node.x];
-      if (inMaze__(current_node, 1, 0))
+      if (inWall__(current_node.y + 1, current_node.x))
         down_element = maze[current_node.y + 1][current_node.x];
-      if (inMaze__(current_node, 0, -1))
+      if (inWall__(current_node.y, current_node.x - 1))
         left_element = maze[current_node.y][current_node.x - 1];
-      if (inMaze__(current_node, 0, 1))
+      if (inWall__(current_node.y, current_node.x + 1))
         right_element = maze[current_node.y][current_node.x + 1];
 
       // 如果左右都探索過了，或上下都探索過了，就把這個牆留著，並且加到確定是牆壁的 vector 裡
@@ -133,7 +133,7 @@ void MazeModel::generateMazePrim()
         std::shuffle(direction_order.begin(), direction_order.end(), gen);
         for (const int32_t index : direction_order) {    //(新的點的)上下左右遍歷
           const auto [dir_y, dir_x] = dir_vec[index];
-          if (inMaze__(current_node, dir_y, dir_x)) {    // 如果上(下左右)的牆在迷宮內
+          if (inWall__(current_node.y + dir_y, current_node.x + dir_x)) {    // 如果上(下左右)的牆在迷宮內
             if (maze[current_node.y + dir_y][current_node.x + dir_x] == MazeElement::WALL)    // 而且如果這個節點是牆
               candidate_list.emplace_back(MazeNode{ current_node.y + dir_y, current_node.x + dir_x, maze[current_node.y + dir_y][current_node.x + dir_x] });    // 就將這個節點加入wall列表中
           }
@@ -179,7 +179,7 @@ void MazeModel::generateMazeRecursionBacktracker()
     int8_t dir = current_node.direction_order[current_node.index++];
     const auto [dir_y, dir_x] = dir_vec[dir];
 
-    if (!inMaze__(current_node.node, 2 * dir_y, 2 * dir_x))
+    if (!inWall__(current_node.node.y + 2 * dir_y, current_node.node.x + 2 * dir_x))
       continue;
 
     if (maze[current_node.node.y + 2 * dir_y][current_node.node.x + 2 * dir_x] == MazeElement::GROUND) {
@@ -263,31 +263,31 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
   if (maze[y][x] == MazeElement::END)    // 如果到終點了就回傳True
     return true;
 
-  maze[y][x] = MazeElement::EXPLORED;    // 探索過的點
-  controller_ptr__->enFramequeue(maze);
+  if (is_first_call) {
+    cleanExplorer();
+  }
+  else {
+    maze[y][x] = MazeElement::EXPLORED;    // 探索過的點
+    controller_ptr__->enFramequeue(maze);
+  }
 
   for (const auto &[dir_y, dir_x] : dir_vec) {    // 上下左右
-    // if (!inMaze__(MazeNode{ y + 1, x + 1, MazeElement::GROUND }, dir_y, dir_x))
-    if (!is_in_maze(y + dir_y, x + dir_x))
+    if (!inMaze__(y + dir_y, x + dir_x))
       continue;
 
-    if (maze[y + dir_y][x + dir_x] != MazeElement::GROUND)    // 而且如果這個節點還沒被探索過
+    if (maze[y + dir_y][x + dir_x] != MazeElement::GROUND && maze[y + dir_y][x + dir_x] != MazeElement::END)    // 而且如果這個節點還沒被探索過
       continue;
 
     if (solveMazeDFS(y + dir_y, x + dir_x)) {    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
-      if (is_first_call) {
-        std::cout << "solveMazeDFS complete1\n";
+      if (is_first_call)
         controller_ptr__->setModelComplete();
-      }
 
       return true;
     }
   }
 
-  if (is_first_call) {
-    std::cout << "solveMazeDFS complete2\n";
+  if (is_first_call)
     controller_ptr__->setModelComplete();
-  }
 
   return false;
 }    // end solveMazeDFS()
@@ -306,7 +306,7 @@ void MazeModel::solveMazeBFS()
     for (const auto &dir : dir_vec) {    // 遍歷上下左右
       const int32_t y = temp_y + dir.first, x = temp_x + dir.second;    // 上下左右的節點
 
-      if (is_in_maze(y, x)) {    // 如果這個節點在迷宮內
+      if (inMaze__(y, x)) {    // 如果這個節點在迷宮內
         if (maze[y][x] == MazeElement::GROUND) {    // 而且如果這個節點還沒被探索過，也不是牆壁
           maze[y][x] = MazeElement::EXPLORED;    // 那就探索他，改 EXPLORED
 
@@ -374,7 +374,7 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
       for (const auto &dir : dir_vec) {
         const int32_t y = temp.y + dir.first, x = temp.x + dir.second;
 
-        if (is_in_maze(y, x)) {
+        if (inMaze__(y, x)) {
           if (maze[y][x] == MazeElement::GROUND) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
             switch (actions) {
             case MazeAction::S_UCS_MANHATTAN:
@@ -431,7 +431,7 @@ void MazeModel::solveMazeGreedy()
       for (const auto &dir : dir_vec) {
         const int32_t y = temp.y + dir.first, x = temp.x + dir.second;
 
-        if (is_in_maze(y, x)) {
+        if (inMaze__(y, x)) {
           if (maze[y][x] == MazeElement::GROUND)    // 如果這個結點還沒走過，就把他加到待走的結點裡
             result.push(Node(pow_two_norm(y, x), y, x));
         }
@@ -492,7 +492,7 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
       for (const auto &dir : dir_vec) {
         const int32_t y = temp.y + dir.first, x = temp.x + dir.second;
 
-        if (is_in_maze(y, x)) {
+        if (inMaze__(y, x)) {
           if (maze[y][x] == MazeElement::GROUND) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
             if (actions == MazeAction::S_ASTAR_INTERVAL) {
               cost = 50;    // cost function設為常數 50
@@ -520,9 +520,14 @@ void MazeModel::setFlag__()
   controller_ptr__->enFramequeue(maze);
 }
 
-bool MazeModel::inMaze__(const MazeNode &node, const int32_t delta_y, const int32_t delta_x)
+bool MazeModel::inWall__(const int32_t y, const int32_t x)
 {
-  return (node.y + delta_y < MAZE_HEIGHT - 1) && (node.x + delta_x < MAZE_WIDTH - 1) && (node.y + delta_y > 0) && (node.x + delta_x > 0);    // 下牆、右牆、上牆、左牆
+  return (y < MAZE_HEIGHT - 1) && (x < MAZE_WIDTH - 1) && (y > 0) && (x > 0);    // 下牆、右牆、上牆、左牆
+}
+
+bool MazeModel::inMaze__(const int32_t y, const int32_t x)
+{
+  return (y < MAZE_HEIGHT) && (x < MAZE_WIDTH) && (y > -1) && (x > -1);
 }
 
 /**
@@ -544,11 +549,6 @@ void MazeModel::setBeginPoint__(MazeNode &node)
 
   controller_ptr__->enFramequeue(maze);
 }    // end setBeginPoint__
-
-bool MazeModel::is_in_maze(const int32_t y, const int32_t x)
-{
-  return (y < MAZE_HEIGHT) && (x < MAZE_WIDTH) && (y >= 0) && (x >= 0);
-}
 
 int32_t MazeModel::pow_two_norm(const int32_t y, const int32_t x)
 {
