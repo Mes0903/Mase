@@ -56,8 +56,8 @@ void MazeController::handleInput(const MazeAction actions)
   case MazeAction::S_UCS_MANHATTAN:
   case MazeAction::S_UCS_TWO_NORM:
   case MazeAction::S_UCS_INTERVAL:
-    // model_ptr__->solveMazeUCS(actions);
-    setModelComplete();
+    t1 = std::thread(&MazeModel::solveMazeUCS, model_ptr__, actions);
+    t1.detach();
     break;
   case MazeAction::S_GREEDY:
     // model_ptr__->solveMazeGreedy();
