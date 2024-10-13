@@ -274,15 +274,18 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
   }
 
   for (const auto &[dir_y, dir_x] : dir_vec) {    // 上下左右
-    if (!inMaze__(y + dir_y, x + dir_x))
+    const int32_t target_y = y + dir_y;
+    const int32_t target_x = x + dir_x;
+
+    if (!inMaze__(target_y, target_x))
       continue;
 
-    if (maze[y + dir_y][x + dir_x] != MazeElement::GROUND && maze[y + dir_y][x + dir_x] != MazeElement::END)    // 而且如果這個節點還沒被探索過
+    if (maze[target_y][target_x] != MazeElement::GROUND && maze[target_y][target_x] != MazeElement::END)    // 而且如果這個節點還沒被探索過
       continue;
 
-    if (solveMazeDFS(y + dir_y, x + dir_x)) {    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
-      if (maze[y + dir_y][x + dir_x] != MazeElement::END) {
-        maze[y + dir_y][x + dir_x] = MazeElement::ANSWER;
+    if (solveMazeDFS(target_y, target_x)) {    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
+      if (maze[target_y][target_x] != MazeElement::END) {
+        maze[target_y][target_x] = MazeElement::ANSWER;
         controller_ptr__->enFramequeue(maze);
       }
 
@@ -301,30 +304,25 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
 
 void MazeModel::solveMazeBFS()
 {
-  std::queue<std::pair<int32_t, int32_t>> result;    // 存節點的 qeque
-  result.push(std::make_pair(BEGIN_Y, BEGIN_X));    // 將一開始的節點加入 qeque
-  maze[BEGIN_Y][BEGIN_X] = MazeElement::BEGIN;    // 起點
+  std::queue<std::pair<int32_t, int32_t>> path;    // 存節點的 qeque
+  path.push(std::make_pair(BEGIN_Y, BEGIN_X));    // 將一開始的節點加入 qeque
 
-
-  while (!result.empty()) {
-    const auto [temp_y, temp_x]{ result.front() };    // 目前的節點
-    result.pop();    // 將目前的節點拿出來
+  while (!path.empty()) {
+    const auto [current_y, current_x] = std::move(path.front());    // 目前的節點
+    path.pop();    // 將目前的節點拿出來
 
     for (const auto &dir : dir_vec) {    // 遍歷上下左右
-      const int32_t y = temp_y + dir.first, x = temp_x + dir.second;    // 上下左右的節點
+      const int32_t target_y = current_y + dir.first;
+      const int32_t target_x = current_x + dir.second;
+      if (!inMaze__(target_y, target_x) || maze[target_y][target_x] == MazeElement::WALL)
+        continue;
 
-      if (inMaze__(y, x)) {    // 如果這個節點在迷宮內
-        if (maze[y][x] == MazeElement::GROUND) {    // 而且如果這個節點還沒被探索過，也不是牆壁
-          maze[y][x] = MazeElement::EXPLORED;    // 那就探索他，改 EXPLORED
+      if (maze[target_y][target_x] == MazeElement::END)
+        return;
 
-          if (y == END_Y && x == END_X) {    // 找到終點就return
-            maze[y][x] = MazeElement::END;    // 終點
-
-            return;
-          }
-          else
-            result.push(std::make_pair(y, x));    // 沒找到節點就加入節點
-        }
+      if (maze[target_y][target_x] == MazeElement::GROUND) {    // 而且如果這個節點還沒被探索過，也不是牆壁
+        maze[target_y][target_x] = MazeElement::EXPLORED;    // 那就探索他，改 EXPLORED
+        path.push(std::make_pair(target_y, target_x));    // 沒找到節點就加入節點
       }
     }
   }    // end while
