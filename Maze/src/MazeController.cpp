@@ -45,28 +45,36 @@ void MazeController::handleInput(const MazeAction actions)
     t1.detach();
     break;
   case MazeAction::S_DFS:
-    model_ptr__->solveMazeDFS(BEGIN_Y, BEGIN_X, true);
+    t1 = std::thread(&MazeModel::solveMazeDFS, model_ptr__, BEGIN_Y, BEGIN_X, true);
+    t1.detach();
     break;
   case MazeAction::S_BFS:
-    model_ptr__->solveMazeBFS();
+    t1 = std::thread(&MazeModel::solveMazeBFS, model_ptr__);
+    t1.detach();
     break;
   case MazeAction::S_UCS_MANHATTAN:
-    model_ptr__->solveMazeUCS(actions);
+    // model_ptr__->solveMazeUCS(actions);
+    setModelComplete();
     break;
   case MazeAction::S_UCS_TWO_NORM:
-    model_ptr__->solveMazeUCS(actions);
+    // model_ptr__->solveMazeUCS(actions);
+    setModelComplete();
     break;
   case MazeAction::S_UCS_INTERVAL:
-    model_ptr__->solveMazeUCS(actions);
+    // model_ptr__->solveMazeUCS(actions);
+    setModelComplete();
     break;
   case MazeAction::S_GREEDY:
-    model_ptr__->solveMazeGreedy();
+    // model_ptr__->solveMazeGreedy();
+    setModelComplete();
     break;
   case MazeAction::S_ASTAR:
-    model_ptr__->solveMazeAStar(actions);
+    // model_ptr__->solveMazeAStar(actions);
+    setModelComplete();
     break;
   case MazeAction::S_ASTAR_INTERVAL:
-    model_ptr__->solveMazeAStar(actions);
+    // model_ptr__->solveMazeAStar(actions);
+    setModelComplete();
     break;
   default:
     std::clog << "invalid action" << std::endl;
