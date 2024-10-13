@@ -36,7 +36,6 @@ enum class MazeAction : int32_t {
   S_BFS,
   S_UCS_MANHATTAN,    // Cost Function 為 Two_Norm，所以距離終點越遠 Cost 越大
   S_UCS_TWO_NORM,    // Cost Function 為 Two_Norm，所以距離終點越遠 Cost 越大
-  S_UCS_INTERVAL,    // Cost Function 以區間來計算，每一個區間 Cost 差10，距離終點越遠 Cost 越大
   S_GREEDY,
   S_ASTAR,
   S_ASTAR_INTERVAL

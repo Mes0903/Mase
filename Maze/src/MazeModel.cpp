@@ -379,17 +379,8 @@ void MazeModel::solveMazeUCS(const MazeAction actions)
     switch (actions) {
     case MazeAction::S_UCS_MANHATTAN:
       return std::abs(END_X - x) + std::abs(END_Y - y);    // 權重為曼哈頓距離
-    case MazeAction::S_UCS_TWO_NORM:
-      return pow_two_norm(y, x);    // 權重為 two_norm
     default:
-      constexpr int32_t interval_weight = 100;
-      constexpr int32_t interval = 10;
-      constexpr int32_t degree = MAZE_HEIGHT / interval;
-
-      if ((y / degree) > (x / degree))
-        return interval_weight * (y / degree);
-      else
-        return interval_weight * (x / degree);
+      return pow_two_norm(y, x);    // 權重為 two_norm
     }
   };
 

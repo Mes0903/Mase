@@ -101,7 +101,6 @@ void MazeView::drawGUI__()
   if (ImGui::Button("Solve Maze (BFS)")) controller_ptr__->handleInput(MazeAction::S_BFS);
   if (ImGui::Button("Solve Maze (UCS Manhattan)")) controller_ptr__->handleInput(MazeAction::S_UCS_MANHATTAN);
   if (ImGui::Button("Solve Maze (UCS Two Norm)")) controller_ptr__->handleInput(MazeAction::S_UCS_TWO_NORM);
-  if (ImGui::Button("Solve Maze (UCS Interval)")) controller_ptr__->handleInput(MazeAction::S_UCS_INTERVAL);
   if (ImGui::Button("Solve Maze (Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY);
   if (ImGui::Button("Solve Maze (A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR);
   if (ImGui::Button("Solve Maze (A* Interval)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_INTERVAL);
