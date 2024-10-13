@@ -64,9 +64,9 @@ void MazeController::handleInput(const MazeAction actions)
     t1.detach();
     break;
   case MazeAction::S_ASTAR_MANHATTAN:
-  case MazeAction::S_ASTAR_INTERVAL:
-    // model_ptr__->solveMazeAStar(actions);
-    setModelComplete();
+  case MazeAction::S_ASTAR_TWO_NORM:
+    t1 = std::thread(&MazeModel::solveMazeAStar, model_ptr__, actions);
+    t1.detach();
     break;
   default:
     std::clog << "invalid action" << std::endl;

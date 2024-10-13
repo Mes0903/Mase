@@ -300,7 +300,7 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
     if (solveMazeDFS(target_y, target_x)) {    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
       if (maze[target_y][target_x] != MazeElement::END) {
         maze[target_y][target_x] = MazeElement::ANSWER;
-        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::ANSWER });
+        controller_ptr__->enFramequeue(maze);
       }
 
       if (is_first_call)
@@ -341,7 +341,7 @@ void MazeModel::solveMazeBFS()
 
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
-          controller_ptr__->enFramequeue(maze, MazeNode{ ans_y, ans_x, MazeElement::ANSWER });
+          controller_ptr__->enFramequeue(maze);
           const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
@@ -514,72 +514,82 @@ void MazeModel::solveMazeGreedy(const MazeAction actions)
 
 void MazeModel::solveMazeAStar(const MazeAction actions)
 {
-  enum class Types : int32_t {
-    Normal = 0,    // Cost Function 為 50
-    Interval = 1,    // Cost Function 以區間來計算，每一個區間 Cost 差10，距離終點越遠 Cost 越大
+  cleanExplored();
+
+  struct TraceNode {
+    int32_t weight;    // f(n) = g(n) + h(n)
+    int32_t g_cost;    // g(n): cost from start to current node
+    int32_t h_cost;    // h(n): heuristic cost from current node to goal
+    int32_t y;
+    int32_t x;
+    TraceNode(int32_t f, int32_t g, int32_t h, int32_t y, int32_t x)
+        : weight(f), g_cost(g), h_cost(h), y(y), x(x) {}
+    bool operator>(const TraceNode &other) const { return weight > other.weight; }
   };
 
-  struct Node {
-    int32_t __Cost;    // Cost Function 有兩種，以區間計算，每個區間 Cost 差10
-    int32_t weight;    // 權重以區間(Cost Function) + Two_Norm 平方(Heuristic Function) 計算，每個區間 Cost 差1000
-    int32_t y;    // y座標
-    int32_t x;    // x座標
-    Node(int32_t cost, int32_t weight, int32_t y, int32_t x) : __Cost(cost), weight(weight), y(y), x(x) {}
-    bool operator>(const Node &other) const { return weight > other.weight; }    // priority比大小只看權重
-    bool operator<(const Node &other) const { return weight < other.weight; }    // priority比大小只看權重
-  };
-
-  std::priority_queue<Node, std::vector<Node>, std::greater<Node>> result;    // 待走的結點，greater代表小的會在前面，由小排到大
-  constexpr int32_t interval_y = MAZE_HEIGHT / 10, interval_x = MAZE_WIDTH / 10;    // 分 10 個區間
-  int32_t cost{}, weight{};
-
-  if (actions == MazeAction::S_ASTAR_INTERVAL) {
-    cost = 50;
-    weight = cost + abs(END_X - BEGIN_X) + abs(END_Y - BEGIN_Y);
-  }
-  else if (actions == MazeAction::S_ASTAR_INTERVAL) {
-    cost = (static_cast<int32_t>(BEGIN_Y / interval_y) < static_cast<int32_t>(BEGIN_X / interval_x)) ? (10 - static_cast<int32_t>(BEGIN_Y / interval_y)) * 8 : (10 - static_cast<int32_t>(BEGIN_X / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
-    weight = cost + twoNorm__(BEGIN_Y, BEGIN_X);    // 權重以區間(Cost) + Two_Norm 計算
-  }
-  result.push(Node(cost, weight, BEGIN_Y, BEGIN_X));    // 將起點加進去
-
-  while (true) {
-    if (result.empty())
-      return;    // 沒找到目標
-    const auto temp = result.top();    // 目前最優先的結點
-    result.pop();    // 取出結點
-
-    if (temp.y == END_Y && temp.x == END_X) {
-      maze[temp.y][temp.x] = MazeElement::END;    // 終點
-
-      return;    // 如果取出的點是終點就return
+  auto calcHeuristic = [&](const int32_t y, const int32_t x) -> int32_t {
+    switch (actions) {
+    case MazeAction::S_ASTAR_MANHATTAN:
+      return std::abs(END_X - x) + std::abs(END_Y - y);    // Manhattan distance
+    default:
+      return twoNorm__(y, x);    // Euclidean distance (squared)
     }
-    else if (maze[temp.y][temp.x] == MazeElement::GROUND) {
-      if (temp.y == BEGIN_Y && temp.x == BEGIN_X)
-        maze[temp.y][temp.x] = MazeElement::BEGIN;    // 起點
-      else {
-        maze[temp.y][temp.x] = MazeElement::EXPLORED;    // 探索過的點要改EXPLORED
+  };
+
+  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<int32_t>> cost_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, std::numeric_limits<int32_t>::max()));
+  std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;
+
+  int32_t weight = calcHeuristic(BEGIN_Y, BEGIN_X);
+  path.push(TraceNode(weight, 0, weight, BEGIN_Y, BEGIN_X));
+  cost_map[BEGIN_Y][BEGIN_X] = 0;
+
+  while (!path.empty()) {
+    const auto current = std::move(path.top());
+    path.pop();
+
+    for (const auto &[dir_y, dir_x] : dir_vec) {
+      const int32_t target_y = current.y + dir_y;
+      const int32_t target_x = current.x + dir_x;
+      weight = calcHeuristic(target_y, target_x);
+      TraceNode target_node(current.g_cost + weight, current.g_cost + 1, weight, target_y, target_x);
+
+      if (!inMaze__(target_y, target_x))
+        continue;
+
+      if (maze[target_y][target_x] == MazeElement::END) {
+        int32_t ans_y = current.y;
+        int32_t ans_x = current.x;
+        while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
+          maze[ans_y][ans_x] = MazeElement::ANSWER;
+          controller_ptr__->enFramequeue(maze);
+          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
+          ans_y = parent_y;
+          ans_x = parent_x;
+        }
+        controller_ptr__->setModelComplete();
+        return;
       }
 
-      for (const auto &dir : dir_vec) {
-        const int32_t y = temp.y + dir.first, x = temp.x + dir.second;
+      if (maze[target_y][target_x] == MazeElement::GROUND) {
+        maze[target_y][target_x] = MazeElement::EXPLORED;
+        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
 
-        if (inMaze__(y, x)) {
-          if (maze[y][x] == MazeElement::GROUND) {    // 如果這個結點還沒走過，就把他加到待走的結點裡
-            if (actions == MazeAction::S_ASTAR_INTERVAL) {
-              cost = 50;    // cost function設為常數 50
-              weight = cost + abs(END_X - x) + abs(END_Y - y);    // heuristic function 設為曼哈頓距離
-            }
-            else if (actions == MazeAction::S_ASTAR_INTERVAL) {
-              cost = (static_cast<int32_t>(y / interval_y) < static_cast<int32_t>(x / interval_x)) ? temp.__Cost + (10 - static_cast<int32_t>(y / interval_y)) * 8 : temp.__Cost + (10 - static_cast<int32_t>(x / interval_x)) * 8;    // Cost 以區間計算，兩個相除是看它在第幾個區間，然後用總區間數減掉，代表它的基礎 Cost，再乘以8
-              weight = cost + twoNorm__(y, x);    // heuristic function 設為 two_norm 平方
-            }
-            result.push(Node(cost, weight, y, x));
-          }
+        cost_map[target_y][target_x] = target_node.weight;
+        parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
+        path.push(target_node);    // 加入節點
+      }
+      else if (maze[target_y][target_x] == MazeElement::EXPLORED) {
+        if (cost_map[target_y][target_x] > target_node.weight) {
+          cost_map[target_y][target_x] = target_node.weight;
+          parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
         }
       }
     }
-  }    // end while
+  }
+
+  // If we get here, no path was found
+  controller_ptr__->setModelComplete();
 }    // end solveMazeAStar()
 
 /* -------------------- private utility function --------------------   */

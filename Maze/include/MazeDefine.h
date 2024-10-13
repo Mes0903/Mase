@@ -27,7 +27,7 @@ enum class MazeAction : int32_t {
   S_GREEDY_MANHATTAN,
   S_GREEDY_TWO_NORM,
   S_ASTAR_MANHATTAN,
-  S_ASTAR_INTERVAL,
+  S_ASTAR_TWO_NORM,
 };
 
 enum class MazeElement : int8_t {

@@ -108,8 +108,8 @@ void MazeView::drawGUI__()
   if (ImGui::Button("Solve Maze (Two Norm UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_TWO_NORM);
   if (ImGui::Button("Solve Maze (Manhattan Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_MANHATTAN);
   if (ImGui::Button("Solve Maze (Two Norm Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_TWO_NORM);
-  if (ImGui::Button("Solve Maze (A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_MANHATTAN);
-  if (ImGui::Button("Solve Maze (A* Interval)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_INTERVAL);
+  if (ImGui::Button("Solve Maze (Manhattan A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_MANHATTAN);
+  if (ImGui::Button("Solve Maze (Two Norm A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_TWO_NORM);
   ImGui::EndGroup();
 
   ImGui::SameLine();
