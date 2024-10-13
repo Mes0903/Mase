@@ -11,6 +11,8 @@
 #include <array>
 #include <utility>
 
+#include <iostream>
+
 MazeModel::MazeModel(uint32_t height, uint32_t width)
     : maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } } {}
 
@@ -24,8 +26,8 @@ void MazeModel::emptyMap()
   for (auto &row : maze)
     std::fill(row.begin(), row.end(), MazeElement::GROUND);
 
-  controller_ptr__->setFrameMaze(maze);
-  controller_ptr__->setModelComplete();
+  controller_ptr__->enFramequeue(maze);
+  setFlag__();
 }
 
 void MazeModel::cleanExplorer()
@@ -33,8 +35,8 @@ void MazeModel::cleanExplorer()
   for (auto &row : maze)
     std::replace(row.begin(), row.end(), MazeElement::EXPLORED, MazeElement::GROUND);
 
-  controller_ptr__->setFrameMaze(maze);
-  controller_ptr__->setModelComplete();
+  controller_ptr__->enFramequeue(maze);
+  setFlag__();
 }
 
 void MazeModel::initMaze()
@@ -50,8 +52,7 @@ void MazeModel::initMaze()
     }
   }
 
-  controller_ptr__->setFrameMaze(maze);
-  controller_ptr__->setModelComplete();
+  controller_ptr__->enFramequeue(maze);
 }
 
 void MazeModel::resetWallAroundMaze()
@@ -65,8 +66,7 @@ void MazeModel::resetWallAroundMaze()
     }
   }
 
-  controller_ptr__->setFrameMaze(maze);
-  controller_ptr__->setModelComplete();
+  controller_ptr__->enFramequeue(maze);
 }
 
 /* --------------------maze generation methods -------------------- */
@@ -117,7 +117,7 @@ void MazeModel::generateMazePrim()
         maze[current_node.y][current_node.x] = MazeElement::EXPLORED;
         candidate_list.erase(candidate_list.begin() + random_index);
 
-        controller_ptr__->enFramequeue(current_node);
+        controller_ptr__->enFramequeue(maze);
 
         if (up_element == MazeElement::EXPLORED && down_element == MazeElement::GROUND)    // 上面探索過，下面還沒
           ++current_node.y;    // 將目前的節點改成牆壁 "下面" 那個節點
@@ -139,12 +139,13 @@ void MazeModel::generateMazePrim()
           }
         }
 
-        controller_ptr__->enFramequeue(current_node);
+        controller_ptr__->enFramequeue(maze);
       }
     }
   }
 
   setFlag__();
+  cleanExplorer();
   controller_ptr__->setModelComplete();
 }    // end generateMazePrim()
 
@@ -187,17 +188,18 @@ void MazeModel::generateMazeRecursionBacktracker()
 
       current_node.node.element = MazeElement::EXPLORED;
       maze[current_node.node.y + dir_y][current_node.node.x + dir_x] = MazeElement::EXPLORED;
-      controller_ptr__->enFramequeue(MazeNode{ current_node.node.y + dir_y, current_node.node.x + dir_x, MazeElement::EXPLORED });
+      controller_ptr__->enFramequeue(maze);
 
       target_node.node.element = MazeElement::EXPLORED;
       maze[target_node.node.y][target_node.node.x] = MazeElement::EXPLORED;
-      controller_ptr__->enFramequeue(target_node.node);
+      controller_ptr__->enFramequeue(maze);
 
       candidate_list.push(target_node);
     }
   }
 
   setFlag__();
+  cleanExplorer();
   controller_ptr__->setModelComplete();
 }    // end generateMazeRecursionBacktracker()
 
@@ -218,13 +220,13 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
 
     for (int32_t i = lx; i <= rx; ++i) {
       maze[wall_index][i] = MazeElement::WALL;    // 將這段距離都設圍牆壁
-      controller_ptr__->enFramequeue(MazeNode{ wall_index, i, MazeElement::WALL });
+      controller_ptr__->enFramequeue(maze);
     }
 
     std::uniform_int_distribution<> w_dis(1, (width - 1) / 2);
     int32_t break_point = lx + 2 * w_dis(gen);
     maze[wall_index][break_point] = MazeElement::GROUND;
-    controller_ptr__->enFramequeue(MazeNode{ wall_index, break_point, MazeElement::GROUND });
+    controller_ptr__->enFramequeue(maze);
 
     generateMazeRecursionDivision(uy, lx, wall_index - 1, rx);    // 上面
     generateMazeRecursionDivision(wall_index + 1, lx, dy, rx);    // 下面
@@ -235,13 +237,13 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
 
     for (int32_t i = uy; i <= dy; ++i) {
       maze[i][wall_index] = MazeElement::WALL;    // 將這段距離都設圍牆壁
-      controller_ptr__->enFramequeue(MazeNode{ i, wall_index, MazeElement::WALL });
+      controller_ptr__->enFramequeue(maze);
     }
 
     std::uniform_int_distribution<> h_dis(1, (height - 1) / 2);
     int32_t break_point = uy + 2 * h_dis(gen);
     maze[break_point][wall_index] = MazeElement::GROUND;
-    controller_ptr__->enFramequeue(MazeNode{ break_point, wall_index, MazeElement::GROUND });
+    controller_ptr__->enFramequeue(maze);
 
     generateMazeRecursionDivision(uy, lx, dy, wall_index - 1);    // 左邊
     generateMazeRecursionDivision(uy, wall_index + 1, dy, rx);    // 右邊
@@ -249,30 +251,44 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
 
   if (is_first_call) {
     setFlag__();
+    cleanExplorer();
     controller_ptr__->setModelComplete();
   }
 }    // end generateMazeRecursionDivision()
 
 /* --------------------maze solving methods -------------------- */
 
-bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x)
+bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_call)
 {
-  maze[1][0] = MazeElement::BEGIN;    // 起點
-  maze[y][x] = MazeElement::EXPLORED;    // 探索過的點
-
-  if (y == END_Y && x == END_X) {    // 如果到終點了就回傳True
-    maze[y][x] = MazeElement::END;    // 終點
-
+  if (maze[y][x] == MazeElement::END)    // 如果到終點了就回傳True
     return true;
-  }
+
+  maze[y][x] = MazeElement::EXPLORED;    // 探索過的點
+  controller_ptr__->enFramequeue(maze);
+
   for (const auto &[dir_y, dir_x] : dir_vec) {    // 上下左右
-    const int32_t temp_y = y + dir_y, temp_x = x + dir_x;
-    if (is_in_maze(temp_y, temp_x)) {    // 如果這個節點在迷宮內
-      if (maze[temp_y][temp_x] == MazeElement::GROUND)    // 而且如果這個節點還沒被探索過
-        if (solveMazeDFS(temp_y, temp_x))    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
-          return true;
+    // if (!inMaze__(MazeNode{ y + 1, x + 1, MazeElement::GROUND }, dir_y, dir_x))
+    if (!is_in_maze(y + dir_y, x + dir_x))
+      continue;
+
+    if (maze[y + dir_y][x + dir_x] != MazeElement::GROUND)    // 而且如果這個節點還沒被探索過
+      continue;
+
+    if (solveMazeDFS(y + dir_y, x + dir_x)) {    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
+      if (is_first_call) {
+        std::cout << "solveMazeDFS complete1\n";
+        controller_ptr__->setModelComplete();
+      }
+
+      return true;
     }
   }
+
+  if (is_first_call) {
+    std::cout << "solveMazeDFS complete2\n";
+    controller_ptr__->setModelComplete();
+  }
+
   return false;
 }    // end solveMazeDFS()
 
@@ -500,8 +516,8 @@ void MazeModel::setFlag__()
 {
   maze[BEGIN_Y][BEGIN_X] = MazeElement::BEGIN;
   maze[END_Y][END_X] = MazeElement::END;
-  controller_ptr__->enFramequeue(MazeNode{ BEGIN_Y, BEGIN_X, MazeElement::BEGIN });
-  controller_ptr__->enFramequeue(MazeNode{ END_Y, END_X, MazeElement::END });
+
+  controller_ptr__->enFramequeue(maze);
 }
 
 bool MazeModel::inMaze__(const MazeNode &node, const int32_t delta_y, const int32_t delta_x)
@@ -526,7 +542,7 @@ void MazeModel::setBeginPoint__(MazeNode &node)
   node.element = MazeElement::EXPLORED;
   maze[node.y][node.x] = MazeElement::EXPLORED;    // Set the randomly chosen point as the generation start point
 
-  controller_ptr__->enFramequeue(node);
+  controller_ptr__->enFramequeue(maze);
 }    // end setBeginPoint__
 
 bool MazeModel::is_in_maze(const int32_t y, const int32_t x)

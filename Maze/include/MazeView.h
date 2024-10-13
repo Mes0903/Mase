@@ -26,16 +26,15 @@ public:
   void setController(MazeController *controller_ptr__);
 
   void render();
-  void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
   void resetUpdateNode();
-  void enFramequeue(const MazeNode &node);
+  void enFramequeue(const std::vector<std::vector<MazeElement>> &node);
 
 private:
   MazeRenderer renderer__;
 
   std::vector<std::vector<MazeElement>> render_maze__;
   MazeController *controller_ptr__;
-  ThreadSafeQueue<MazeNode> maze_diff_queue__;
+  ThreadSafeQueue<decltype(render_maze__)> maze_queue__;
   MazeNode update_node__;
   bool stop_flag__;
   bool grid_flag__;

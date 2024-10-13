@@ -22,33 +22,24 @@ void MazeView::setController(MazeController *controller_ptr__)
   this->controller_ptr__ = controller_ptr__;
 }
 
-void MazeView::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
-{
-  std::lock_guard<std::mutex> lock(maze_mutex__);
-  render_maze__ = maze;
-}
-
 void MazeView::resetUpdateNode()
 {
   update_node__ = MazeNode{ -1, -1, MazeElement::INVALID };
 }
 
-void MazeView::enFramequeue(const MazeNode &node)
+void MazeView::enFramequeue(const std::vector<std::vector<MazeElement>> &maze)
 {
-  maze_diff_queue__.enqueue(node);
+  maze_queue__.enqueue(maze);
 }
 
 void MazeView::deFramequeue__()
 {
-  std::optional<MazeNode> opt_node = maze_diff_queue__.dequeue();
-  if (opt_node.has_value()) {
-    update_node__ = *opt_node;
-
+  std::optional<decltype(render_maze__)> opt_maze = maze_queue__.dequeue();
+  if (opt_maze.has_value()) {
     std::lock_guard<std::mutex> lock(maze_mutex__);
-    render_maze__[update_node__.y][update_node__.x] = update_node__.element;
+    render_maze__ = std::move(*opt_maze);
   }
   else if (controller_ptr__->isModelComplete()) {
-    controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORER);
     controller_ptr__->setViewComplete();
   }
 }
@@ -99,6 +90,7 @@ void MazeView::drawGUI__()
   ImGui::Checkbox("Grid", &grid_flag__);
   ImGui::Checkbox("Stop", &stop_flag__);
   if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
+  if (ImGui::Button("Clean Explorer")) controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORER);
   if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIMS);
   if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
   if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_DIVISION);

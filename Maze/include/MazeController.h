@@ -25,8 +25,7 @@ public:
   void setModelView(MazeModel *model_ptr, MazeView *view_ptr);
 
   void handleInput(const MazeAction action);
-  void setFrameMaze(const std::vector<std::vector<MazeElement>> &maze);
-  void enFramequeue(const MazeNode &node);
+  void enFramequeue(const std::vector<std::vector<MazeElement>> &maze);
 
   void setModelComplete();
   bool isModelComplete() const;

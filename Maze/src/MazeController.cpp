@@ -26,12 +26,15 @@ void MazeController::handleInput(const MazeAction actions)
   switch (actions) {
   case MazeAction::G_CLEANALL:
     model_ptr__->emptyMap();
+    setModelComplete();
     break;
   case MazeAction::G_CLEAN_EXPLORER:
     model_ptr__->cleanExplorer();
+    setModelComplete();
     break;
   case MazeAction::G_INIT:
     model_ptr__->initMaze();
+    setModelComplete();
     break;
   case MazeAction::G_PRIMS:
     t1 = std::thread(&MazeModel::generateMazePrim, model_ptr__);
@@ -46,7 +49,7 @@ void MazeController::handleInput(const MazeAction actions)
     t1.detach();
     break;
   case MazeAction::S_DFS:
-    model_ptr__->solveMazeDFS(1, 0);
+    model_ptr__->solveMazeDFS(BEGIN_Y, BEGIN_X, true);
     break;
   case MazeAction::S_BFS:
     model_ptr__->solveMazeBFS();
@@ -75,14 +78,9 @@ void MazeController::handleInput(const MazeAction actions)
   }
 }
 
-void MazeController::setFrameMaze(const std::vector<std::vector<MazeElement>> &maze)
+void MazeController::enFramequeue(const std::vector<std::vector<MazeElement>> &maze)
 {
-  view_ptr__->setFrameMaze(maze);
-}
-
-void MazeController::enFramequeue(const MazeNode &node)
-{
-  view_ptr__->enFramequeue(node);
+  view_ptr__->enFramequeue(maze);
 }
 
 void MazeController::setModelComplete()
