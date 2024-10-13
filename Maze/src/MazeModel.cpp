@@ -39,7 +39,7 @@ void MazeModel::cleanExplorer()
   setFlag__();
 }
 
-void MazeModel::initMaze()
+void MazeModel::initMaze__()
 {
   for (int32_t y{}; y < MAZE_HEIGHT; ++y) {
     for (int32_t x{}; x < MAZE_WIDTH; ++x) {
@@ -73,7 +73,7 @@ void MazeModel::resetWallAroundMaze()
 
 void MazeModel::generateMazePrim()
 {
-  initMaze();
+  initMaze__();
 
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   std::array<int32_t, 4> direction_order{ 0, 1, 2, 3 };
@@ -151,7 +151,7 @@ void MazeModel::generateMazePrim()
 
 void MazeModel::generateMazeRecursionBacktracker()
 {
-  initMaze();
+  initMaze__();
 
   struct TraceNode {
     MazeNode node;

@@ -32,10 +32,6 @@ void MazeController::handleInput(const MazeAction actions)
     model_ptr__->cleanExplorer();
     setModelComplete();
     break;
-  case MazeAction::G_INIT:
-    model_ptr__->initMaze();
-    setModelComplete();
-    break;
   case MazeAction::G_PRIMS:
     t1 = std::thread(&MazeModel::generateMazePrim, model_ptr__);
     t1.detach();
