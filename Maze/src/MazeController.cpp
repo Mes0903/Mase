@@ -63,7 +63,7 @@ void MazeController::handleInput(const MazeAction actions)
     t1 = std::thread(&MazeModel::solveMazeGreedy, model_ptr__, actions);
     t1.detach();
     break;
-  case MazeAction::S_ASTAR:
+  case MazeAction::S_ASTAR_MANHATTAN:
   case MazeAction::S_ASTAR_INTERVAL:
     // model_ptr__->solveMazeAStar(actions);
     setModelComplete();
