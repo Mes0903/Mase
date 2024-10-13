@@ -9,15 +9,13 @@
  * @date 2024-09-22
  */
 
-#include "MazeNode.h"
+
 #include "MazeController.h"
 #include "MazeDefine.h"
 
 #include <vector>
 #include <utility>
 #include <cstdint>
-
-
 
 class MazeController;
 

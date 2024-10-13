@@ -12,7 +12,7 @@
 #include "MazeController.h"
 #include "MazeModel.h"
 #include "MazeView.h"
-#include "MazeNode.h"
+
 
 MazeView::MazeView(uint32_t height, uint32_t width)
     : render_maze__{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node__{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag__{ false }, grid_flag__{ true }, renderer__{} {}
@@ -108,7 +108,7 @@ void MazeView::drawGUI__()
   if (ImGui::Button("Solve Maze (Two Norm UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_TWO_NORM);
   if (ImGui::Button("Solve Maze (Manhattan Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_MANHATTAN);
   if (ImGui::Button("Solve Maze (Two Norm Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_TWO_NORM);
-  if (ImGui::Button("Solve Maze (A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR);
+  if (ImGui::Button("Solve Maze (A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_MANHATTAN);
   if (ImGui::Button("Solve Maze (A* Interval)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_INTERVAL);
   ImGui::EndGroup();
 

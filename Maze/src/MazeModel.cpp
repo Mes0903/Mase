@@ -1,7 +1,7 @@
 #include "MazeController.h"
 #include "MazeModel.h"
 #include "MazeView.h"
-#include "MazeNode.h"
+
 
 #include <chrono>
 #include <random>

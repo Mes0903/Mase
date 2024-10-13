@@ -11,7 +11,7 @@
 
 #include "MazeModel.h"
 #include "MazeView.h"
-#include "MazeNode.h"
+#include "MazeDefine.h"
 
 #include <atomic>
 

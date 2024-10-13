@@ -10,14 +10,14 @@
  */
 
 #include "MazeController.h"
-#include "MazeNode.h"
+
 #include "MazeRenderer.h"
 #include "ThreadSafeQueue.h"
+#include "MazeDefine.h"
 
 #include <mutex>
 
 class MazeController;
-struct MazeNode;
 
 class MazeView {
 public:

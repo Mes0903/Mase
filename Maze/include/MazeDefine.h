@@ -45,4 +45,8 @@ enum class MazeDistance : int32_t {
   D_TWO_NORM,
 };
 
+struct MazeNode {
+  int32_t y, x;
+  MazeElement element;
+};
 #endif
