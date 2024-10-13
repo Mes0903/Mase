@@ -16,6 +16,7 @@ enum class MazeElement : int8_t {
   WALL = 0,
   GROUND,
   EXPLORED,
+  ANSWER,
   BEGIN,
   END,
 };

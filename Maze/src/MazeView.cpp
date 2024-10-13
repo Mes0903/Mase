@@ -69,6 +69,8 @@ void MazeView::renderMaze__()
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(255, 255, 255, 255));
       else if (cell == MazeElement::EXPLORED)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(231, 158, 79, 255));
+      else if (cell == MazeElement::ANSWER)
+        draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(170, 100, 255, 255));
 
       if (grid_flag__)
         draw_list->AddRect(cell_min, cell_max, IM_COL32(100, 100, 100, 255));

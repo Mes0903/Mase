@@ -32,8 +32,10 @@ void MazeModel::emptyMap()
 
 void MazeModel::cleanExplorer()
 {
-  for (auto &row : maze)
+  for (auto &row : maze) {
     std::replace(row.begin(), row.end(), MazeElement::EXPLORED, MazeElement::GROUND);
+    std::replace(row.begin(), row.end(), MazeElement::ANSWER, MazeElement::GROUND);
+  }
 
   controller_ptr__->enFramequeue(maze);
   setFlag__();
@@ -279,6 +281,11 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
       continue;
 
     if (solveMazeDFS(y + dir_y, x + dir_x)) {    // 就繼續遞迴，如果已經找到目標就會回傳 true ，所以這裡放在 if 裡面
+      if (maze[y + dir_y][x + dir_x] != MazeElement::END) {
+        maze[y + dir_y][x + dir_x] = MazeElement::ANSWER;
+        controller_ptr__->enFramequeue(maze);
+      }
+
       if (is_first_call)
         controller_ptr__->setModelComplete();
 
