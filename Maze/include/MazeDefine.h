@@ -14,7 +14,6 @@ inline constexpr std::pair<int32_t, int32_t> dir_vec[4]{ { 1, 0 }, { 0, 1 }, { -
 
 enum class MazeAction : int32_t {
   G_CLEANALL,
-  G_CLEAN_EXPLORED,
   G_PRIM,
   G_PRIM_BREAK,
   G_RECURSION_BACKTRACKER,

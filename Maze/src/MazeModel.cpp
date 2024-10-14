@@ -40,33 +40,6 @@ void MazeModel::emptyMap()
   setFlag__();
 }
 
-void MazeModel::cleanExplored()
-{
-  for (auto &row : maze) {
-    std::replace(row.begin(), row.end(), MazeElement::EXPLORED, MazeElement::GROUND);
-    std::replace(row.begin(), row.end(), MazeElement::ANSWER, MazeElement::GROUND);
-  }
-
-  controller_ptr__->enFramequeue(maze);
-  setFlag__();
-}
-
-void MazeModel::initMaze__()
-{
-  for (int32_t y{}; y < MAZE_HEIGHT; ++y) {
-    for (int32_t x{}; x < MAZE_WIDTH; ++x) {
-      if (y == 0 || y == MAZE_HEIGHT - 1 || x == 0 || x == MAZE_WIDTH - 1)    // 上牆或下牆
-        maze[y][x] = MazeElement::WALL;
-      else if (x % 2 == 1 && y % 2 == 1)    // xy 都為奇數的點當作GROUND
-        maze[y][x] = MazeElement::GROUND;
-      else
-        maze[y][x] = MazeElement::WALL;    // xy 其他的點當牆做切割點的動作
-    }
-  }
-
-  controller_ptr__->enFramequeue(maze);
-}
-
 void MazeModel::resetWallAroundMaze()
 {
   for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
@@ -171,7 +144,7 @@ void MazeModel::generateMazePrim(const MazeAction actions)
   }
 
   setFlag__();
-  cleanExplored();
+  cleanExplored__();
   controller_ptr__->setModelComplete();
 }    // end generateMazePrim()
 
@@ -225,7 +198,7 @@ void MazeModel::generateMazeRecursionBacktracker()
   }
 
   setFlag__();
-  cleanExplored();
+  cleanExplored__();
   controller_ptr__->setModelComplete();
 }    // end generateMazeRecursionBacktracker()
 
@@ -277,7 +250,7 @@ void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx
 
   if (is_first_call) {
     setFlag__();
-    cleanExplored();
+    cleanExplored__();
     controller_ptr__->setModelComplete();
   }
 }    // end generateMazeRecursionDivision()
@@ -290,7 +263,7 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
     return true;
 
   if (is_first_call) {
-    cleanExplored();
+    cleanExplored__();
     solve_cost__ = 0;
     solve_cell__ = 0;
   }
@@ -333,7 +306,7 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
 
 void MazeModel::solveMazeBFS()
 {
-  cleanExplored();
+  cleanExplored__();
   solve_cost__ = 0;
   solve_cell__ = 0;
 
@@ -385,7 +358,7 @@ void MazeModel::solveMazeBFS()
 
 void MazeModel::solveMazeAStar(const MazeAction actions)
 {
-  cleanExplored();
+  cleanExplored__();
   solve_cost__ = 0;
   solve_cell__ = 0;
 
@@ -492,6 +465,33 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
 }    // end solveMazeAStar()
 
 /* -------------------- private utility function --------------------   */
+
+void MazeModel::cleanExplored__()
+{
+  for (auto &row : maze) {
+    std::replace(row.begin(), row.end(), MazeElement::EXPLORED, MazeElement::GROUND);
+    std::replace(row.begin(), row.end(), MazeElement::ANSWER, MazeElement::GROUND);
+  }
+
+  controller_ptr__->enFramequeue(maze);
+  setFlag__();
+}
+
+void MazeModel::initMaze__()
+{
+  for (int32_t y{}; y < MAZE_HEIGHT; ++y) {
+    for (int32_t x{}; x < MAZE_WIDTH; ++x) {
+      if (y == 0 || y == MAZE_HEIGHT - 1 || x == 0 || x == MAZE_WIDTH - 1)    // 上牆或下牆
+        maze[y][x] = MazeElement::WALL;
+      else if (x % 2 == 1 && y % 2 == 1)    // xy 都為奇數的點當作GROUND
+        maze[y][x] = MazeElement::GROUND;
+      else
+        maze[y][x] = MazeElement::WALL;    // xy 其他的點當牆做切割點的動作
+    }
+  }
+
+  controller_ptr__->enFramequeue(maze);
+}
 
 void MazeModel::setFlag__()
 {

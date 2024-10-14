@@ -28,10 +28,6 @@ void MazeController::handleInput(const MazeAction actions)
     model_ptr__->emptyMap();
     setModelComplete();
     break;
-  case MazeAction::G_CLEAN_EXPLORED:
-    model_ptr__->cleanExplored();
-    setModelComplete();
-    break;
   case MazeAction::G_PRIM:
   case MazeAction::G_PRIM_BREAK:
     t1 = std::thread(&MazeModel::generateMazePrim, model_ptr__, actions);

@@ -134,7 +134,6 @@ void MazeView::drawGUI__()
       ImGui::Dummy(ImVec2(0.0f, 5.0f));
       ImGui::Separator();
       if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
-      if (ImGui::Button("Clean Explored")) controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORED);
       if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIM);
       if (ImGui::Button("Generate Maze (Prim's) and Break some walls")) controller_ptr__->handleInput(MazeAction::G_PRIM_BREAK);
       if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
