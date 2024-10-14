@@ -1,6 +1,5 @@
 include(FetchContent)
 set(IMGUI_DIR ${THIRD_DIR}/imgui)
-set(IMPLOT_DIR ${THIRD_DIR}/implot)
 set(IMFD_DIR ${THIRD_DIR}/ImGuiFileDialog)
 
 # if(UNIX)
@@ -13,4 +12,3 @@ set(IMFD_DIR ${THIRD_DIR}/ImGuiFileDialog)
 add_subdirectory(glfw)
 add_subdirectory(glad)
 add_subdirectory(imgui)
-add_subdirectory(implot)

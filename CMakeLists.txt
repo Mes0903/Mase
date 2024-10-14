@@ -44,7 +44,6 @@ target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
     ${THIRD_DIR}/imgui
-    ${THIRD_DIR}/implot
     ${THIRD_DIR}/glfw/include
     ${THIRD_DIR}/glad/include
     ${MAZE_DIR}/include
@@ -54,7 +53,6 @@ target_include_directories(
 target_link_libraries(
   ${PROJECT_NAME}
   IMGUI_LIB
-  IMPLOT_LIB
   MAZE_CORE
   glfw
   glad
