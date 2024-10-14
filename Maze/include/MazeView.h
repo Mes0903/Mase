@@ -39,6 +39,10 @@ private:
   MazeNode update_node__;
   bool stop_flag__;
   bool grid_flag__;
+  bool limit_fps__;
+  uint32_t fps__;
+  uint32_t cell_size__;
+  std::chrono::steady_clock::time_point frame__;
   std::mutex maze_mutex__;
 
 private:

@@ -10,7 +10,6 @@ inline constexpr int32_t BEGIN_Y = 1;
 inline constexpr int32_t BEGIN_X = 0;
 inline constexpr int32_t END_Y = MAZE_HEIGHT - 2;
 inline constexpr int32_t END_X = MAZE_WIDTH - 1;
-inline constexpr int32_t GRID_SIZE = 15;
 inline constexpr std::pair<int32_t, int32_t> dir_vec[4]{ { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
 enum class MazeAction : int32_t {

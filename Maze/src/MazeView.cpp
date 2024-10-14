@@ -15,7 +15,15 @@
 
 
 MazeView::MazeView(uint32_t height, uint32_t width)
-    : render_maze__{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, update_node__{ MazeNode{ -1, -1, MazeElement::INVALID } }, stop_flag__{ false }, grid_flag__{ true }, renderer__{} {}
+    : render_maze__{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } },
+      update_node__{ MazeNode{ -1, -1, MazeElement::INVALID } },
+      stop_flag__{ false },
+      grid_flag__{ true },
+      limit_fps__{ false },
+      fps__{ 240 },
+      frame__{ std::chrono::steady_clock::now() },
+      cell_size__{ 15 },
+      renderer__{} {}
 
 void MazeView::setController(MazeController *controller_ptr__)
 {
@@ -53,14 +61,13 @@ void MazeView::renderMaze__()
 {
   ImDrawList *draw_list = ImGui::GetWindowDrawList();
   const ImVec2 p = ImGui::GetCursorScreenPos();
-  const float cell_size = GRID_SIZE;
 
   std::lock_guard<std::mutex> lock(maze_mutex__);
   for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
     for (int32_t x = 0; x < MAZE_WIDTH; ++x) {
       MazeElement cell = render_maze__[y][x];
-      ImVec2 cell_min = ImVec2(p.x + x * cell_size, p.y + y * cell_size);
-      ImVec2 cell_max = ImVec2(cell_min.x + cell_size, cell_min.y + cell_size);
+      ImVec2 cell_min = ImVec2(p.x + x * cell_size__, p.y + y * cell_size__);
+      ImVec2 cell_max = ImVec2(cell_min.x + cell_size__, cell_min.y + cell_size__);
 
       if (update_node__.y == y && update_node__.x == x)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(50, 215, 250, 255));
@@ -89,43 +96,75 @@ void MazeView::drawGUI__()
     deFramequeue__();
 
   ImGui::Begin("Maze Generator and Solver");
+  {
+    // Calculate the width of the FPS text
+    const char *fps_text = "Application average 000.000 ms/frame (000.0 FPS)";
+    ImVec2 text_size = ImGui::CalcTextSize(fps_text);
+    float column_width = text_size.x + ImGui::GetStyle().FramePadding.x * 2;
 
-  ImGui::BeginGroup();
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    // Left column for controls
+    ImGui::BeginChild("ControlsColumn", ImVec2(column_width, cell_size__ * (MAZE_HEIGHT + 1)), true);
+    {
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-  ImGui::Checkbox("Grid", &grid_flag__);
-  ImGui::Checkbox("Stop", &stop_flag__);
-  if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
-  if (ImGui::Button("Clean Explored")) controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORED);
-  if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIM);
-  if (ImGui::Button("Generate Maze (Prim's) and Break some walls")) controller_ptr__->handleInput(MazeAction::G_PRIM_BREAK);
-  if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
-  if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_DIVISION);
-  if (ImGui::Button("Solve Maze (DFS)")) controller_ptr__->handleInput(MazeAction::S_DFS);
-  if (ImGui::Button("Solve Maze (BFS)")) controller_ptr__->handleInput(MazeAction::S_BFS);
-  if (ImGui::Button("Solve Maze (Manhattan UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_MANHATTAN);
-  if (ImGui::Button("Solve Maze (Two Norm UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_TWO_NORM);
-  if (ImGui::Button("Solve Maze (Manhattan Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_MANHATTAN);
-  if (ImGui::Button("Solve Maze (Two Norm Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_TWO_NORM);
-  if (ImGui::Button("Solve Maze (Manhattan A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_MANHATTAN);
-  if (ImGui::Button("Solve Maze (Two Norm A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_TWO_NORM);
-  ImGui::EndGroup();
+      static uint32_t cell_buffer = cell_size__;
+      ImGui::SetNextItemWidth(40);
+      if (ImGui::InputScalar("Cell Size", ImGuiDataType_U32, &cell_buffer, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue))
+        cell_size__ = cell_buffer;
+      if (ImGui::Checkbox("Limit FPS", &limit_fps__)) frame__ = std::chrono::steady_clock::now();
 
-  ImGui::SameLine();
-  ImGui::BeginChild("MazeView", ImVec2(0, 0), true);
-  // std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-  renderMaze__();
-  ImGui::EndChild();
+      static uint32_t fps_buffer = fps__;
+      ImGui::SameLine();
+      ImGui::SetNextItemWidth(40);
+      if (ImGui::InputScalar("FPS", ImGuiDataType_U32, &fps_buffer, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue)) {
+        fps__ = fps_buffer;
+        frame__ = std::chrono::steady_clock::now();
+        limit_fps__ = true;
+      }
 
+      ImGui::Checkbox("Grid", &grid_flag__);
+      ImGui::Checkbox("Stop", &stop_flag__);
+
+      ImGui::Separator();
+      if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
+      if (ImGui::Button("Clean Explored")) controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORED);
+      if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIM);
+      if (ImGui::Button("Generate Maze (Prim's) and Break some walls")) controller_ptr__->handleInput(MazeAction::G_PRIM_BREAK);
+      if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
+      if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_DIVISION);
+      if (ImGui::Button("Solve Maze (DFS)")) controller_ptr__->handleInput(MazeAction::S_DFS);
+      if (ImGui::Button("Solve Maze (BFS)")) controller_ptr__->handleInput(MazeAction::S_BFS);
+      if (ImGui::Button("Solve Maze (Manhattan UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_MANHATTAN);
+      if (ImGui::Button("Solve Maze (Two Norm UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_TWO_NORM);
+      if (ImGui::Button("Solve Maze (Manhattan Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_MANHATTAN);
+      if (ImGui::Button("Solve Maze (Two Norm Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_TWO_NORM);
+      if (ImGui::Button("Solve Maze (Manhattan A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_MANHATTAN);
+      if (ImGui::Button("Solve Maze (Two Norm A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_TWO_NORM);
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+    ImGui::BeginChild("MazeView", ImVec2(cell_size__ * (MAZE_WIDTH + 1), cell_size__ * (MAZE_HEIGHT + 1)), true);
+    {
+      renderMaze__();
+    }
+    ImGui::EndChild();
+  }
   ImGui::End();
 }
 
 void MazeView::render()
 {
   while (!glfwWindowShouldClose(renderer__.window__)) {
+    if (limit_fps__)
+      frame__ += std::chrono::milliseconds(1000 / fps__);
+
     renderer__.setNewFrame__();
     drawGUI__();
     renderer__.render();
+
+    if (limit_fps__)
+      std::this_thread::sleep_until(frame__);
   }
 }
