@@ -14,11 +14,21 @@
 #include <iostream>
 
 MazeModel::MazeModel(uint32_t height, uint32_t width)
-    : maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } } {}
+    : maze{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } }, solve_cost__(0), solve_cell__(0) {}
 
 void MazeModel::setController(MazeController *controller_ptr)
 {
   this->controller_ptr__ = controller_ptr;
+}
+
+int32_t MazeModel::getSolveCost() const
+{
+  return solve_cost__;
+}
+
+int32_t MazeModel::getSolveCell() const
+{
+  return solve_cell__;
 }
 
 void MazeModel::emptyMap()
@@ -517,14 +527,14 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
   cleanExplored();
 
   struct TraceNode {
-    int32_t weight;    // f(n) = g(n) + h(n)
-    int32_t g_cost;    // g(n): cost from start to current node
-    int32_t h_cost;    // h(n): heuristic cost from current node to goal
+    int32_t f_score;    // f(n) = g(n) + h(n)
+    int32_t g_score;    // g(n): cost from start to current node
+    int32_t h_score;    // h(n): heuristic cost from current node to goal
     int32_t y;
     int32_t x;
     TraceNode(int32_t f, int32_t g, int32_t h, int32_t y, int32_t x)
-        : weight(f), g_cost(g), h_cost(h), y(y), x(x) {}
-    bool operator>(const TraceNode &other) const { return weight > other.weight; }
+        : f_score(f), g_score(g), h_score(h), y(y), x(x) {}
+    bool operator>(const TraceNode &other) const { return f_score > other.f_score; }
   };
 
   auto calcHeuristic = [&](const int32_t y, const int32_t x) -> int32_t {
@@ -532,63 +542,76 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
     case MazeAction::S_ASTAR_MANHATTAN:
       return std::abs(END_X - x) + std::abs(END_Y - y);    // Manhattan distance
     default:
-      return twoNorm__(y, x);    // Euclidean distance (squared)
+      return std::sqrt(std::pow(END_Y - y, 2) + std::pow(END_X - x, 2));    // Euclidean distance
     }
   };
 
-  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<std::pair<int32_t, int32_t>>> parent_map(MAZE_HEIGHT, std::vector<std::pair<int32_t, int32_t>>(MAZE_WIDTH, { -1, -1 }));
   std::vector<std::vector<int32_t>> cost_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, std::numeric_limits<int32_t>::max()));
-  std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;
+  std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> open_list;
 
-  int32_t weight = calcHeuristic(BEGIN_Y, BEGIN_X);
-  path.push(TraceNode(weight, 0, weight, BEGIN_Y, BEGIN_X));
-  cost_map[BEGIN_Y][BEGIN_X] = 0;
+  {
+    int32_t h_score = calcHeuristic(BEGIN_Y, BEGIN_X);
+    int32_t g_score = 0;
+    int32_t f_score = g_score + h_score;
+    open_list.push(TraceNode(f_score, g_score, h_score, BEGIN_Y, BEGIN_X));
+    cost_map[BEGIN_Y][BEGIN_X] = f_score;
+  }
 
-  while (!path.empty()) {
-    const auto current = std::move(path.top());
-    path.pop();
+  constexpr int32_t cost_step = 1;
+  while (!open_list.empty()) {
+    const auto current = std::move(open_list.top());
+    open_list.pop();
 
     for (const auto &[dir_y, dir_x] : dir_vec) {
-      const int32_t target_y = current.y + dir_y;
-      const int32_t target_x = current.x + dir_x;
-      weight = calcHeuristic(target_y, target_x);
-      TraceNode target_node(current.g_cost + weight, current.g_cost + 1, weight, target_y, target_x);
+      const int32_t ny = current.y + dir_y;
+      const int32_t nx = current.x + dir_x;
 
-      if (!inMaze__(target_y, target_x))
+      int32_t h_score = calcHeuristic(ny, nx);
+      int32_t g_score = current.g_score + cost_step;
+      int32_t f_score = g_score + h_score;
+      TraceNode target_node(f_score, g_score, h_score, ny, nx);
+
+      if (!inMaze__(ny, nx) || maze[ny][nx] == MazeElement::WALL)
         continue;
 
-      if (maze[target_y][target_x] == MazeElement::END) {
+      if (maze[ny][nx] == MazeElement::END) {
         int32_t ans_y = current.y;
         int32_t ans_x = current.x;
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
           controller_ptr__->enFramequeue(maze);
-          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
+
+          solve_cost__ += cost_map[ans_y][ans_x];
+          solve_cell__++;
+
+          const auto [parent_y, parent_x] = parent_map[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
         }
+
         controller_ptr__->setModelComplete();
         return;
       }
 
-      if (maze[target_y][target_x] == MazeElement::GROUND) {
-        maze[target_y][target_x] = MazeElement::EXPLORED;
-        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
+      if (maze[ny][nx] == MazeElement::GROUND) {
+        maze[ny][nx] = MazeElement::EXPLORED;
+        controller_ptr__->enFramequeue(maze, MazeNode{ ny, nx, MazeElement::EXPLORED });
 
-        cost_map[target_y][target_x] = target_node.weight;
-        parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
-        path.push(target_node);    // 加入節點
+        cost_map[ny][nx] = target_node.f_score;
+        parent_map[ny][nx] = { current.y, current.x };
+        open_list.push(target_node);
       }
-      else if (maze[target_y][target_x] == MazeElement::EXPLORED) {
-        if (cost_map[target_y][target_x] > target_node.weight) {
-          cost_map[target_y][target_x] = target_node.weight;
-          parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
+      else if (maze[ny][nx] == MazeElement::EXPLORED) {
+        if (cost_map[ny][nx] > target_node.f_score) {
+          cost_map[ny][nx] = target_node.f_score;
+          parent_map[ny][nx] = { current.y, current.x };
         }
       }
     }
   }
 
-  // If we get here, no path was found
+  // If we get here, no open_list was found
   controller_ptr__->setModelComplete();
 }    // end solveMazeAStar()
 

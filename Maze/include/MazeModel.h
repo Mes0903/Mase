@@ -22,7 +22,10 @@ class MazeController;
 class MazeModel {
 public:
   MazeModel(uint32_t height, uint32_t width);
+
   void setController(MazeController *controller_ptr);
+  int32_t getSolveCost() const;
+  int32_t getSolveCell() const;
 
   void emptyMap();
   void cleanExplored();
@@ -44,6 +47,8 @@ public:
 
 private:
   MazeController *controller_ptr__;
+  int32_t solve_cost__;
+  int32_t solve_cell__;
 
 private:
   bool inWall__(const int32_t y, const int32_t x);
