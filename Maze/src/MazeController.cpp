@@ -53,16 +53,9 @@ void MazeController::handleInput(const MazeAction actions)
     t1 = std::thread(&MazeModel::solveMazeBFS, model_ptr__);
     t1.detach();
     break;
-  case MazeAction::S_UCS_MANHATTAN:
-  case MazeAction::S_UCS_TWO_NORM:
-    t1 = std::thread(&MazeModel::solveMazeUCS, model_ptr__, actions);
-    t1.detach();
-    break;
+  case MazeAction::S_UCS:
   case MazeAction::S_GREEDY_MANHATTAN:
   case MazeAction::S_GREEDY_TWO_NORM:
-    t1 = std::thread(&MazeModel::solveMazeGreedy, model_ptr__, actions);
-    t1.detach();
-    break;
   case MazeAction::S_ASTAR_MANHATTAN:
   case MazeAction::S_ASTAR_TWO_NORM:
     t1 = std::thread(&MazeModel::solveMazeAStar, model_ptr__, actions);

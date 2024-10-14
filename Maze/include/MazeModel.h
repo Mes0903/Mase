@@ -38,8 +38,6 @@ public:
 
   bool solveMazeDFS(const int32_t y, const int32_t x, bool is_first_call = false);
   void solveMazeBFS();
-  void solveMazeUCS(const MazeAction actions);
-  void solveMazeGreedy(const MazeAction actions);
   void solveMazeAStar(const MazeAction actions);
 
 public:

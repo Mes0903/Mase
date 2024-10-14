@@ -372,156 +372,6 @@ void MazeModel::solveMazeBFS()
   }    // end while
 }    // end solveMazeBFS()
 
-void MazeModel::solveMazeUCS(const MazeAction actions)
-{
-  cleanExplored();
-
-  struct TraceNode {
-    int32_t weight;
-    int32_t y;
-    int32_t x;
-    TraceNode(int32_t weight, int32_t y, int32_t x) : weight(weight), y(y), x(x) {}
-    bool operator>(const TraceNode &other) const { return weight > other.weight; }
-    bool operator<(const TraceNode &other) const { return weight < other.weight; }
-  };
-
-  auto calcWeight = [&](const int32_t y, const int32_t x) -> int32_t {
-    switch (actions) {
-    case MazeAction::S_UCS_MANHATTAN:
-      return std::abs(END_X - x) + std::abs(END_Y - y);    // 權重為曼哈頓距離
-    default:
-      return twoNorm__(y, x);    // 權重為 two_norm
-    }
-  };
-
-  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
-  std::vector<std::vector<int32_t>> cost_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, 0));
-  std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;    // 待走的結點，greater代表小的會在前面，由小排到大
-  int32_t weight = calcWeight(BEGIN_Y, BEGIN_X);
-  path.push(TraceNode(weight, BEGIN_Y, BEGIN_X));
-
-  while (!path.empty()) {
-    const auto current = std::move(path.top());
-    path.pop();
-
-    for (const auto &dir : dir_vec) {
-      const int32_t target_y = current.y + dir.first;
-      const int32_t target_x = current.x + dir.second;
-      weight = calcWeight(target_y, target_x);
-      TraceNode target_node(current.weight + weight, target_y, target_x);
-
-      if (!inMaze__(target_y, target_x))
-        continue;
-
-      if (maze[target_y][target_x] == MazeElement::END) {
-        int32_t ans_y = current.y;
-        int32_t ans_x = current.x;
-
-        while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
-          maze[ans_y][ans_x] = MazeElement::ANSWER;
-          controller_ptr__->enFramequeue(maze);
-          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
-          ans_y = parent_y;
-          ans_x = parent_x;
-        }
-
-        controller_ptr__->setModelComplete();
-        return;    // 如果取出的點是終點就return
-      }
-
-      if (maze[target_y][target_x] == MazeElement::GROUND) {
-        maze[target_y][target_x] = MazeElement::EXPLORED;
-        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
-
-        cost_map[target_y][target_x] = target_node.weight;
-        parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
-        path.push(target_node);    // 加入節點
-      }
-      else if (maze[target_y][target_x] == MazeElement::EXPLORED) {
-        if (cost_map[target_y][target_x] > target_node.weight) {
-          cost_map[target_y][target_x] = target_node.weight;
-          parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
-        }
-      }
-    }
-  }
-}    // end solveMazeUCS()
-
-void MazeModel::solveMazeGreedy(const MazeAction actions)
-{
-  cleanExplored();
-
-  struct TraceNode {
-    int32_t weight;
-    int32_t y;
-    int32_t x;
-    TraceNode(int32_t weight, int32_t y, int32_t x) : weight(weight), y(y), x(x) {}
-    bool operator>(const TraceNode &other) const { return weight > other.weight; }
-    bool operator<(const TraceNode &other) const { return weight < other.weight; }
-  };
-
-  auto calcWeight = [&](const int32_t y, const int32_t x) -> int32_t {
-    switch (actions) {
-    case MazeAction::S_GREEDY_MANHATTAN:
-      return std::abs(END_X - x) + std::abs(END_Y - y);    // 權重為曼哈頓距離
-    default:
-      return twoNorm__(y, x);    // 權重為 two_norm
-    }
-  };
-
-  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
-  std::vector<std::vector<int32_t>> cost_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, 0));
-  std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> path;    // 待走的結點，greater代表小的會在前面，由小排到大
-  int32_t weight = calcWeight(BEGIN_Y, BEGIN_X);
-  path.push(TraceNode(weight, BEGIN_Y, BEGIN_X));
-
-  while (!path.empty()) {
-    const auto current = std::move(path.top());
-    path.pop();
-
-    for (const auto &dir : dir_vec) {
-      const int32_t target_y = current.y + dir.first;
-      const int32_t target_x = current.x + dir.second;
-      weight = calcWeight(target_y, target_x);
-      TraceNode target_node(weight, target_y, target_x);
-
-      if (!inMaze__(target_y, target_x))
-        continue;
-
-      if (maze[target_y][target_x] == MazeElement::END) {
-        int32_t ans_y = current.y;
-        int32_t ans_x = current.x;
-
-        while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
-          maze[ans_y][ans_x] = MazeElement::ANSWER;
-          controller_ptr__->enFramequeue(maze);
-          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
-          ans_y = parent_y;
-          ans_x = parent_x;
-        }
-
-        controller_ptr__->setModelComplete();
-        return;    // 如果取出的點是終點就return
-      }
-
-      if (maze[target_y][target_x] == MazeElement::GROUND) {
-        maze[target_y][target_x] = MazeElement::EXPLORED;
-        controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
-
-        cost_map[target_y][target_x] = target_node.weight;
-        parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
-        path.push(target_node);    // 加入節點
-      }
-      else if (maze[target_y][target_x] == MazeElement::EXPLORED) {
-        if (cost_map[target_y][target_x] > target_node.weight) {
-          cost_map[target_y][target_x] = target_node.weight;
-          parent_map[target_y][target_x] = { current.y, current.x, MazeElement::EXPLORED };
-        }
-      }
-    }
-  }
-}    // end solveMazeGreedy()
-
 void MazeModel::solveMazeAStar(const MazeAction actions)
 {
   cleanExplored();
@@ -540,9 +390,22 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
   auto calcHeuristic = [&](const int32_t y, const int32_t x) -> int32_t {
     switch (actions) {
     case MazeAction::S_ASTAR_MANHATTAN:
+    case MazeAction::S_GREEDY_MANHATTAN:
       return std::abs(END_X - x) + std::abs(END_Y - y);    // Manhattan distance
     default:
       return std::sqrt(std::pow(END_Y - y, 2) + std::pow(END_X - x, 2));    // Euclidean distance
+    }
+  };
+
+  auto calcFScore = [&](const int32_t g, const int32_t h) -> int32_t {
+    switch (actions) {
+    case MazeAction::S_UCS:
+      return g;
+    case MazeAction::S_GREEDY_MANHATTAN:
+    case MazeAction::S_GREEDY_TWO_NORM:
+      return h;
+    default:
+      return g + h;
     }
   };
 
@@ -553,7 +416,7 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
   {
     int32_t h_score = calcHeuristic(BEGIN_Y, BEGIN_X);
     int32_t g_score = 0;
-    int32_t f_score = g_score + h_score;
+    int32_t f_score = calcFScore(g_score, h_score);
     open_list.push(TraceNode(f_score, g_score, h_score, BEGIN_Y, BEGIN_X));
     cost_map[BEGIN_Y][BEGIN_X] = f_score;
   }
@@ -567,9 +430,9 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
       const int32_t ny = current.y + dir_y;
       const int32_t nx = current.x + dir_x;
 
-      int32_t h_score = calcHeuristic(ny, nx);
-      int32_t g_score = current.g_score + cost_step;
-      int32_t f_score = g_score + h_score;
+      const int32_t h_score = calcHeuristic(ny, nx);
+      const int32_t g_score = current.g_score + cost_step;
+      const int32_t f_score = calcFScore(g_score, h_score);
       TraceNode target_node(f_score, g_score, h_score, ny, nx);
 
       if (!inMaze__(ny, nx) || maze[ny][nx] == MazeElement::WALL)

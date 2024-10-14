@@ -135,8 +135,7 @@ void MazeView::drawGUI__()
       if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_DIVISION);
       if (ImGui::Button("Solve Maze (DFS)")) controller_ptr__->handleInput(MazeAction::S_DFS);
       if (ImGui::Button("Solve Maze (BFS)")) controller_ptr__->handleInput(MazeAction::S_BFS);
-      if (ImGui::Button("Solve Maze (Manhattan UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_MANHATTAN);
-      if (ImGui::Button("Solve Maze (Two Norm UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS_TWO_NORM);
+      if (ImGui::Button("Solve Maze (UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS);
       if (ImGui::Button("Solve Maze (Manhattan Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_MANHATTAN);
       if (ImGui::Button("Solve Maze (Two Norm Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_TWO_NORM);
       if (ImGui::Button("Solve Maze (Manhattan A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_MANHATTAN);
