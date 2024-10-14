@@ -54,7 +54,7 @@ void MazeRenderer::hintGLFWWindow__()
 
 void MazeRenderer::createGLFWWindow__()
 {
-  window__ = glfwCreateWindow(1600, 900, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+  window__ = glfwCreateWindow(1600, 900, "Mase", NULL, NULL);
   if (window__ == NULL)
     exit(EXIT_FAILURE);
 
