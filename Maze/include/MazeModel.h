@@ -54,8 +54,6 @@ private:
   bool inWall__(const int32_t y, const int32_t x);
   bool inMaze__(const int32_t y, const int32_t x);
   void setBeginPoint__(MazeNode &node);
-
-  int32_t twoNorm__(const int32_t y, const int32_t x);
 };
 
 #endif

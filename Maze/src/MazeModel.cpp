@@ -530,8 +530,3 @@ void MazeModel::setBeginPoint__(MazeNode &node)
 
   controller_ptr__->enFramequeue(maze);
 }    // end setBeginPoint__
-
-int32_t MazeModel::twoNorm__(const int32_t y, const int32_t x)
-{
-  return pow((END_Y - y), 2) + pow((END_X - x), 2);
-}
