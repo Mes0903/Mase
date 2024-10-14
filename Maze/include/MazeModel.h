@@ -28,7 +28,6 @@ public:
   int32_t getSolveCell() const;
 
   void emptyMap();
-  void resetWallAroundMaze();
 
   // maze generation and solving methods
   void generateMazePrim(const MazeAction actions);
@@ -50,6 +49,7 @@ private:
 private:
   void cleanExplored__();
   void initMaze__();
+  void resetWallAroundMaze__();
   void setFlag__();
   bool inWall__(const int32_t y, const int32_t x);
   bool inMaze__(const int32_t y, const int32_t x);

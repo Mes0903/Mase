@@ -40,20 +40,6 @@ void MazeModel::emptyMap()
   setFlag__();
 }
 
-void MazeModel::resetWallAroundMaze()
-{
-  for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
-    for (int32_t x = 0; x < MAZE_WIDTH; ++x) {
-      if (x == 0 || x == MAZE_WIDTH - 1 || y == 0 || y == MAZE_HEIGHT - 1)
-        maze[y][x] = MazeElement::WALL;    // Wall
-      else
-        maze[y][x] = MazeElement::GROUND;    // Ground
-    }
-  }
-
-  controller_ptr__->enFramequeue(maze);
-}
-
 /* --------------------maze generation methods -------------------- */
 
 void MazeModel::generateMazePrim(const MazeAction actions)
@@ -205,7 +191,7 @@ void MazeModel::generateMazeRecursionBacktracker()
 void MazeModel::generateMazeRecursionDivision(const int32_t uy, const int32_t lx, const int32_t dy, const int32_t rx, bool is_first_call)
 {
   if (is_first_call)
-    resetWallAroundMaze();
+    resetWallAroundMaze__();
 
   std::mt19937 gen(std::chrono::high_resolution_clock::now().time_since_epoch().count());    // 產生亂數
   int32_t width = rx - lx + 1, height = dy - uy + 1;
@@ -487,6 +473,20 @@ void MazeModel::initMaze__()
         maze[y][x] = MazeElement::GROUND;
       else
         maze[y][x] = MazeElement::WALL;    // xy 其他的點當牆做切割點的動作
+    }
+  }
+
+  controller_ptr__->enFramequeue(maze);
+}
+
+void MazeModel::resetWallAroundMaze__()
+{
+  for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
+    for (int32_t x = 0; x < MAZE_WIDTH; ++x) {
+      if (x == 0 || x == MAZE_WIDTH - 1 || y == 0 || y == MAZE_HEIGHT - 1)
+        maze[y][x] = MazeElement::WALL;    // Wall
+      else
+        maze[y][x] = MazeElement::GROUND;    // Ground
     }
   }
 
