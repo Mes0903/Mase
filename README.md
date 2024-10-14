@@ -2,9 +2,9 @@
 
 The reason this project called Mase is beacause my name is Mes :p
 
-Mase is an Visualization of maze generalization and maze solver algorithm.
+*Mase* is an cross platform project for the visualization of maze generalization and maze solver algorithm.
 
-The project was made by C++17 and ImGui, with the Opengl and glfw/glad backend
+It was made by C++17 and ImGui, with the OpenGL and glfw/glad backend.
 
 ![](document/mase.gif)
 
@@ -81,4 +81,4 @@ add_subdirectory(glfw)
 
 Glad in this project is for opengl 4.6, so you may need to change the version of glad if you are using a different version of OpenGL.
 
-You can download the correspond version on the [glad loader website](https://glad.dav1d.de/). 
+You can download the correspond version on the [glad loader website](https://glad.dav1d.de/).
