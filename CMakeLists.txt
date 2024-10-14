@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(Mazeproject)
+project(Mase)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -37,7 +37,7 @@ add_subdirectory(${MAZE_DIR})
 
 add_executable(
   ${PROJECT_NAME} 
-  ${PROJECT_SOURCE_DIR}/src/imgui_demo.cpp
+  ${PROJECT_SOURCE_DIR}/src/mase.cpp
 )
 
 target_include_directories(
