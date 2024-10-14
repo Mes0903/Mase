@@ -4,16 +4,15 @@
 /**
  * @file MazeView.h
  * @author Mes (mes900903@gmail.com)
- * @brief Display the maze
+ * @brief The view of the maze, contain the main GUI logic.
  * @version 0.1
- * @date 2024-09-22
+ * @date 2024-10-14
  */
 
+#include "MazeDefine.h"
 #include "MazeController.h"
-
 #include "MazeRenderer.h"
 #include "ThreadSafeQueue.h"
-#include "MazeDefine.h"
 
 #include <mutex>
 

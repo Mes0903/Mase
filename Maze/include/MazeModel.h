@@ -6,9 +6,8 @@
  * @author Mes (mes900903@gmail.com)
  * @brief The model of the maze, build and store the maze
  * @version 0.1
- * @date 2024-09-22
+ * @date 2024-10-14
  */
-
 
 #include "MazeController.h"
 #include "MazeDefine.h"

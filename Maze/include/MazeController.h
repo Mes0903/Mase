@@ -6,7 +6,7 @@
  * @author Mes
  * @brief The controller of the maze, accepts and processes the user's action.
  * @version 0.1
- * @date 2024-09-22
+ * @date 2024-10-14
  */
 
 #include "MazeModel.h"
@@ -17,14 +17,12 @@
 
 class MazeModel;
 class MazeView;
-struct MazeNode;
-enum class MazeAction;
 
 class MazeController {
 public:
   void setModelView(MazeModel *model_ptr, MazeView *view_ptr);
 
-  void handleInput(const MazeAction action);
+  void handleAction(const MazeAction action);
   void enFramequeue(const std::vector<std::vector<MazeElement>> &maze, const MazeNode &node = MazeNode{ -1, -1, MazeElement::INVALID });
 
   void setModelComplete();

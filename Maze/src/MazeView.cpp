@@ -10,9 +10,7 @@
 #include <GLFW/glfw3.h>
 
 #include "MazeController.h"
-#include "MazeModel.h"
 #include "MazeView.h"
-
 
 MazeView::MazeView(uint32_t height, uint32_t width)
     : render_maze__{ height, std::vector<MazeElement>{ width, MazeElement::GROUND } },
@@ -23,7 +21,11 @@ MazeView::MazeView(uint32_t height, uint32_t width)
       fps__{ 240 },
       frame__{ std::chrono::steady_clock::now() },
       cell_size__{ 15 },
-      renderer__{} {}
+      renderer__{}
+{
+  render_maze__[BEGIN_Y][BEGIN_X] = MazeElement::BEGIN;
+  render_maze__[END_Y][END_X] = MazeElement::END;
+}
 
 void MazeView::setController(MazeController *controller_ptr__)
 {
@@ -35,40 +37,50 @@ void MazeView::resetUpdateNode()
   update_node__ = MazeNode{ -1, -1, MazeElement::INVALID };
 }
 
+/**
+ * @brief Enqueue the maze and the node to the view.
+ */
 void MazeView::enFramequeue(const std::vector<std::vector<MazeElement>> &maze, const MazeNode &node)
 {
   maze_queue__.enqueue(maze);
   update_node_queue__.enqueue(node);
 }
 
+/**
+ * @brief Dequeue the maze and the node from the view.
+ */
 void MazeView::deFramequeue__()
 {
   std::optional<decltype(render_maze__)> opt_maze = maze_queue__.dequeue();
   std::optional<MazeNode> opt_node = update_node_queue__.dequeue();
   if (opt_maze.has_value()) {
-    std::lock_guard<std::mutex> lock(maze_mutex__);
+    std::lock_guard<std::mutex> lock(maze_mutex__);    // lock the maze
     render_maze__ = std::move(*opt_maze);
 
     if (opt_node.has_value())
       update_node__ = std::move(*opt_node);
   }
   else if (controller_ptr__->isModelComplete()) {
-    controller_ptr__->setViewComplete();
+    controller_ptr__->setViewComplete();    // if the model is complete, and the queue is empty, set the view complete
   }
 }
 
+/**
+ * @brief The main logic to render the maze.
+ */
 void MazeView::renderMaze__()
 {
   ImDrawList *draw_list = ImGui::GetWindowDrawList();
   const ImVec2 p = ImGui::GetCursorScreenPos();
 
-  std::lock_guard<std::mutex> lock(maze_mutex__);
+  std::lock_guard<std::mutex> lock(maze_mutex__);    // lock the maze
   for (int32_t y = 0; y < MAZE_HEIGHT; ++y) {
     for (int32_t x = 0; x < MAZE_WIDTH; ++x) {
       MazeElement cell = render_maze__[y][x];
       ImVec2 cell_min = ImVec2(p.x + x * cell_size__, p.y + y * cell_size__);
       ImVec2 cell_max = ImVec2(cell_min.x + cell_size__, cell_min.y + cell_size__);
 
+      // draw the cell of the maze in corresponding color
       if (update_node__.y == y && update_node__.x == x)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(50, 215, 250, 255));
       else if (cell == MazeElement::BEGIN)
@@ -84,12 +96,16 @@ void MazeView::renderMaze__()
       else if (cell == MazeElement::ANSWER)
         draw_list->AddRectFilled(cell_min, cell_max, IM_COL32(170, 100, 255, 255));
 
+      // draw the grid line
       if (grid_flag__)
         draw_list->AddRect(cell_min, cell_max, IM_COL32(100, 100, 100, 255));
     }
   }
 }
 
+/**
+ * @brief Draw the main GUI, including the maze and the controls panel, the maze part is hosted by the renderMaze__() function.
+ */
 void MazeView::drawGUI__()
 {
   if (!stop_flag__)
@@ -125,26 +141,37 @@ void MazeView::drawGUI__()
 
       ImGui::Checkbox("Grid", &grid_flag__);
       ImGui::Checkbox("Stop", &stop_flag__);
+
+      ImGui::Dummy(ImVec2(0.0f, 3.0f));
       ImGui::Separator();
-      ImGui::Dummy(ImVec2(0.0f, 5.0f));
+      ImGui::Dummy(ImVec2(0.0f, 3.0f));
 
       ImGui::Text("Spend Cost: %d", controller_ptr__->getSolveCost());
       ImGui::Text("Spend Cell: %d", controller_ptr__->getSolveCell());
 
-      ImGui::Dummy(ImVec2(0.0f, 5.0f));
+      ImGui::Dummy(ImVec2(0.0f, 3.0f));
       ImGui::Separator();
-      if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
-      if (ImGui::Button("Generate Maze (Prim's)")) controller_ptr__->handleInput(MazeAction::G_PRIM);
-      if (ImGui::Button("Generate Maze (Prim's) and Break some walls")) controller_ptr__->handleInput(MazeAction::G_PRIM_BREAK);
-      if (ImGui::Button("Generate Maze (Recursion Backtracker)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_BACKTRACKER);
-      if (ImGui::Button("Generate Maze (Recursion Division)")) controller_ptr__->handleInput(MazeAction::G_RECURSION_DIVISION);
-      if (ImGui::Button("Solve Maze (DFS)")) controller_ptr__->handleInput(MazeAction::S_DFS);
-      if (ImGui::Button("Solve Maze (BFS)")) controller_ptr__->handleInput(MazeAction::S_BFS);
-      if (ImGui::Button("Solve Maze (UCS)")) controller_ptr__->handleInput(MazeAction::S_UCS);
-      if (ImGui::Button("Solve Maze (Manhattan Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_MANHATTAN);
-      if (ImGui::Button("Solve Maze (Two Norm Greedy)")) controller_ptr__->handleInput(MazeAction::S_GREEDY_TWO_NORM);
-      if (ImGui::Button("Solve Maze (Manhattan A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_MANHATTAN);
-      if (ImGui::Button("Solve Maze (Two Norm A*)")) controller_ptr__->handleInput(MazeAction::S_ASTAR_TWO_NORM);
+      ImGui::Dummy(ImVec2(0.0f, 3.0f));
+
+      ImGui::Text("Generate Maze");
+      if (ImGui::Button("Clean All")) controller_ptr__->handleAction(MazeAction::G_CLEANALL);
+      if (ImGui::Button("Randomized Prim's")) controller_ptr__->handleAction(MazeAction::G_PRIM);
+      if (ImGui::Button("Randomized Prim's and Break some walls")) controller_ptr__->handleAction(MazeAction::G_PRIM_BREAK);
+      if (ImGui::Button("Recursion Backtracker")) controller_ptr__->handleAction(MazeAction::G_RECURSION_BACKTRACKER);
+      if (ImGui::Button("Recursion Division")) controller_ptr__->handleAction(MazeAction::G_RECURSION_DIVISION);
+
+      ImGui::Dummy(ImVec2(0.0f, 3.0f));
+      ImGui::Separator();
+      ImGui::Dummy(ImVec2(0.0f, 3.0f));
+
+      ImGui::Text("Solve Maze");
+      if (ImGui::Button("DFS")) controller_ptr__->handleAction(MazeAction::S_DFS);
+      if (ImGui::Button("BFS")) controller_ptr__->handleAction(MazeAction::S_BFS);
+      if (ImGui::Button("UCS")) controller_ptr__->handleAction(MazeAction::S_UCS);
+      if (ImGui::Button("Manhattan Greedy")) controller_ptr__->handleAction(MazeAction::S_GREEDY_MANHATTAN);
+      if (ImGui::Button("Two Norm Greedy")) controller_ptr__->handleAction(MazeAction::S_GREEDY_TWO_NORM);
+      if (ImGui::Button("Manhattan A*")) controller_ptr__->handleAction(MazeAction::S_ASTAR_MANHATTAN);
+      if (ImGui::Button("Two Norm A*")) controller_ptr__->handleAction(MazeAction::S_ASTAR_TWO_NORM);
     }
     ImGui::EndChild();
 
@@ -158,9 +185,13 @@ void MazeView::drawGUI__()
   ImGui::End();
 }
 
+/**
+ * @brief The main loop to render the maze.
+ */
 void MazeView::render()
 {
   while (!glfwWindowShouldClose(renderer__.window__)) {
+    // use the time_point to limit the fps, come from https://stackoverflow.com/questions/38730273/how-to-limit-fps-in-a-loop-with-c
     if (limit_fps__)
       frame__ += std::chrono::milliseconds(1000 / fps__);
 

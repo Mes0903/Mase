@@ -5,6 +5,11 @@
 #include <thread>
 #include <iostream>
 
+/**
+ * @brief Set the model and view pointer of the maze.
+ * @param model_ptr The pointer to the model.
+ * @param view_ptr The pointer to the view.
+ */
 void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
 {
   this->model_ptr__ = model_ptr;
@@ -14,7 +19,11 @@ void MazeController::setModelView(MazeModel *model_ptr, MazeView *view_ptr)
   this->view_ptr__->setController(this);
 }
 
-void MazeController::handleInput(const MazeAction actions)
+/**
+ * @brief Handle the action come from the view.
+ * @param actions The action to be handled.
+ */
+void MazeController::handleAction(const MazeAction actions)
 {
   if (!isModelComplete() || !isViewComplete())
     return;
@@ -57,9 +66,7 @@ void MazeController::handleInput(const MazeAction actions)
     t1 = std::thread(&MazeModel::solveMazeAStar, model_ptr__, actions);
     t1.detach();
     break;
-  default:
-    std::clog << "invalid action" << std::endl;
-    break;
+  default:;    // should not reach here, do nothing
   }
 }
 
@@ -68,11 +75,15 @@ void MazeController::enFramequeue(const std::vector<std::vector<MazeElement>> &m
   view_ptr__->enFramequeue(maze, node);
 }
 
+/**
+ * @brief Set the model complete flag to true. Also it will reset the update node in the view.
+ */
 void MazeController::setModelComplete()
 {
   view_ptr__->resetUpdateNode();
   model_complete_flag__.store(true);
 }
+
 bool MazeController::isModelComplete() const
 {
   return model_complete_flag__.load();

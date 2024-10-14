@@ -1,6 +1,17 @@
 #ifndef THREADSAFEQUEUE_H
 #define THREADSAFEQUEUE_H
 
+/**
+ * @file ThreadSafeQueue.h
+ * @author 5568ke
+ * @brief A thread-safe queue implementation using std::queue and std::mutex.
+ * @version 0.1
+ * @date 2024-10-14
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
+
 #include <queue>
 #include <mutex>
 #include <optional>
@@ -14,7 +25,6 @@ public:
     queue_.push(std::move(value));
   }
 
-  // 正常來說應該要用 condition_variable 的，但我們情況特殊所以長這個怪怪的樣子
   std::optional<T> dequeue()
   {
     std::lock_guard<std::mutex> lock(mtx_);

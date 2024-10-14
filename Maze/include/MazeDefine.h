@@ -1,6 +1,14 @@
 #ifndef MAZE_DEFINE_H
 #define MAZE_DEFINE_H
 
+/**
+ * @file MazeDefine.h
+ * @author Mes
+ * @brief The general definitions of the maze.
+ * @version 0.1
+ * @date 2024-10-14
+ */
+
 #include <cstdint>
 #include <utility>
 

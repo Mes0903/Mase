@@ -1,6 +1,14 @@
 #ifndef MAZEIMGUIHANDLER_H
 #define MAZEIMGUIHANDLER_H
 
+/**
+ * @file MazeRenderer.h
+ * @author Mes (mes900903@gmail.com)
+ * @brief The main renderer of the maze, using to host the ImGui and OpenGL environment.
+ * @version 0.1
+ * @date 2024-10-14
+ */
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
