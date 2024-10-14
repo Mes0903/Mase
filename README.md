@@ -6,10 +6,9 @@ Mase is an Visualization of maze generalization and maze solver algorithm.
 
 The project was made by C++17 and ImGui, with the Opengl and glfw/glad backend
 
-# Dependencies
+![](document/mase.gif)
 
-- OpenGL
-- C++17
+> There was an Qt version before but no longer maintain anymore.
 
 # Implemented algorithm
 
@@ -31,6 +30,11 @@ There are two heuristic functions now:
 
 - [Euclidean distance(two norm)](https://en.wikipedia.org/wiki/Euclidean_distance)
 - [Taxicab geometry](https://en.wikipedia.org/wiki/Taxicab_geometry)
+
+# Dependencies
+
+- OpenGL
+- C++17
 
 # How to build
 
