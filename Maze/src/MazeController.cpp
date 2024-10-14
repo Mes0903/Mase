@@ -86,7 +86,18 @@ void MazeController::setViewComplete()
 {
   view_complete_flag__.store(true);
 }
+
 bool MazeController::isViewComplete() const
 {
   return view_complete_flag__.load();
+}
+
+int32_t MazeController::getSolveCost() const
+{
+  return model_ptr__->getSolveCost();
+}
+
+int32_t MazeController::getSolveCell() const
+{
+  return model_ptr__->getSolveCell();
 }

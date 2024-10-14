@@ -33,6 +33,9 @@ public:
   void setViewComplete();
   bool isViewComplete() const;
 
+  int32_t getSolveCost() const;
+  int32_t getSolveCell() const;
+
 private:
   std::atomic<bool> model_complete_flag__ = true;
   std::atomic<bool> view_complete_flag__ = true;

@@ -291,6 +291,8 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
 
   if (is_first_call) {
     cleanExplored();
+    solve_cost__ = 0;
+    solve_cell__ = 0;
   }
   else {
     maze[y][x] = MazeElement::EXPLORED;    // 探索過的點
@@ -311,6 +313,9 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
       if (maze[target_y][target_x] != MazeElement::END) {
         maze[target_y][target_x] = MazeElement::ANSWER;
         controller_ptr__->enFramequeue(maze);
+
+        solve_cost__++;
+        solve_cell__++;
       }
 
       if (is_first_call)
@@ -329,6 +334,8 @@ bool MazeModel::solveMazeDFS(const int32_t y, const int32_t x, bool is_first_cal
 void MazeModel::solveMazeBFS()
 {
   cleanExplored();
+  solve_cost__ = 0;
+  solve_cell__ = 0;
 
   std::vector<std::vector<MazeNode>> come_from(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
   std::queue<std::pair<int32_t, int32_t>> path;    // 存節點的 qeque
@@ -352,6 +359,10 @@ void MazeModel::solveMazeBFS()
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
           controller_ptr__->enFramequeue(maze);
+
+          solve_cost__++;
+          solve_cell__++;
+
           const auto [parent_y, parent_x, _] = come_from[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
@@ -375,6 +386,8 @@ void MazeModel::solveMazeBFS()
 void MazeModel::solveMazeAStar(const MazeAction actions)
 {
   cleanExplored();
+  solve_cost__ = 0;
+  solve_cell__ = 0;
 
   struct TraceNode {
     int32_t f_score;    // f(n) = g(n) + h(n)
@@ -430,13 +443,13 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
       const int32_t ny = current.y + dir_y;
       const int32_t nx = current.x + dir_x;
 
+      if (!inMaze__(ny, nx) || maze[ny][nx] == MazeElement::WALL)
+        continue;
+
       const int32_t h_score = calcHeuristic(ny, nx);
       const int32_t g_score = current.g_score + g_map[ny][nx];
       const int32_t f_score = calcFScore(g_score, h_score);
       TraceNode target_node(f_score, g_score, h_score, ny, nx);
-
-      if (!inMaze__(ny, nx) || maze[ny][nx] == MazeElement::WALL)
-        continue;
 
       if (maze[ny][nx] == MazeElement::END) {
         int32_t ans_y = current.y;

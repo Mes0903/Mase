@@ -125,7 +125,13 @@ void MazeView::drawGUI__()
 
       ImGui::Checkbox("Grid", &grid_flag__);
       ImGui::Checkbox("Stop", &stop_flag__);
+      ImGui::Separator();
+      ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
+      ImGui::Text("Spend Cost: %d", controller_ptr__->getSolveCost());
+      ImGui::Text("Spend Cell: %d", controller_ptr__->getSolveCell());
+
+      ImGui::Dummy(ImVec2(0.0f, 5.0f));
       ImGui::Separator();
       if (ImGui::Button("Clean All")) controller_ptr__->handleInput(MazeAction::G_CLEANALL);
       if (ImGui::Button("Clean Explored")) controller_ptr__->handleInput(MazeAction::G_CLEAN_EXPLORED);
