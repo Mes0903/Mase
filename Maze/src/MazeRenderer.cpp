@@ -86,7 +86,7 @@ void MazeRenderer::setNewFrame__()
   ImGui::NewFrame();
 }
 
-void MazeRenderer::render()
+void MazeRenderer::render__()
 {
   // Rendering
   ImGui::Render();

@@ -166,7 +166,7 @@ void MazeView::render()
 
     renderer__.setNewFrame__();
     drawGUI__();
-    renderer__.render();
+    renderer__.render__();
 
     if (limit_fps__)
       std::this_thread::sleep_until(frame__);

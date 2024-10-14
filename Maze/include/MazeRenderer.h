@@ -20,10 +20,10 @@
 class MazeRenderer {
   friend class MazeView;
 
-public:
+private:
   MazeRenderer();
   ~MazeRenderer();
-  void render();
+  void render__();
 
 private:
   void initGLFW__();
