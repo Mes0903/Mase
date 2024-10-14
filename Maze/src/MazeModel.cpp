@@ -330,7 +330,7 @@ void MazeModel::solveMazeBFS()
 {
   cleanExplored();
 
-  std::vector<std::vector<MazeNode>> parent_map(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
+  std::vector<std::vector<MazeNode>> come_from(MAZE_HEIGHT, std::vector<MazeNode>(MAZE_WIDTH, { -1, -1, MazeElement::INVALID }));
   std::queue<std::pair<int32_t, int32_t>> path;    // 存節點的 qeque
   path.push(std::make_pair(BEGIN_Y, BEGIN_X));    // 將一開始的節點加入 qeque
 
@@ -352,7 +352,7 @@ void MazeModel::solveMazeBFS()
         while (ans_y != BEGIN_Y || ans_x != BEGIN_X) {
           maze[ans_y][ans_x] = MazeElement::ANSWER;
           controller_ptr__->enFramequeue(maze);
-          const auto [parent_y, parent_x, _] = parent_map[ans_y][ans_x];
+          const auto [parent_y, parent_x, _] = come_from[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
         }
@@ -365,7 +365,7 @@ void MazeModel::solveMazeBFS()
         maze[target_y][target_x] = MazeElement::EXPLORED;    // 那就探索他，改 EXPLORED
         controller_ptr__->enFramequeue(maze, MazeNode{ target_y, target_x, MazeElement::EXPLORED });
 
-        parent_map[target_y][target_x] = { current_y, current_x, MazeElement::EXPLORED };
+        come_from[target_y][target_x] = { current_y, current_x, MazeElement::EXPLORED };
         path.push(std::make_pair(target_y, target_x));    // 沒找到節點就加入節點
       }
     }
@@ -409,19 +409,19 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
     }
   };
 
-  std::vector<std::vector<std::pair<int32_t, int32_t>>> parent_map(MAZE_HEIGHT, std::vector<std::pair<int32_t, int32_t>>(MAZE_WIDTH, { -1, -1 }));
-  std::vector<std::vector<int32_t>> cost_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, std::numeric_limits<int32_t>::max()));
+  std::vector<std::vector<std::pair<int32_t, int32_t>>> come_from(MAZE_HEIGHT, std::vector<std::pair<int32_t, int32_t>>(MAZE_WIDTH, { -1, -1 }));
+  std::vector<std::vector<int32_t>> f_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, std::numeric_limits<int32_t>::max()));
+  std::vector<std::vector<int32_t>> g_map(MAZE_HEIGHT, std::vector<int32_t>(MAZE_WIDTH, 1));
   std::priority_queue<TraceNode, std::vector<TraceNode>, std::greater<TraceNode>> open_list;
 
   {
     int32_t h_score = calcHeuristic(BEGIN_Y, BEGIN_X);
-    int32_t g_score = 0;
+    int32_t g_score = g_map[BEGIN_Y][BEGIN_X];
     int32_t f_score = calcFScore(g_score, h_score);
-    open_list.push(TraceNode(f_score, g_score, h_score, BEGIN_Y, BEGIN_X));
-    cost_map[BEGIN_Y][BEGIN_X] = f_score;
+    open_list.emplace(f_score, g_score, h_score, BEGIN_Y, BEGIN_X);
+    f_map[BEGIN_Y][BEGIN_X] = f_score;
   }
 
-  constexpr int32_t cost_step = 1;
   while (!open_list.empty()) {
     const auto current = std::move(open_list.top());
     open_list.pop();
@@ -431,7 +431,7 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
       const int32_t nx = current.x + dir_x;
 
       const int32_t h_score = calcHeuristic(ny, nx);
-      const int32_t g_score = current.g_score + cost_step;
+      const int32_t g_score = current.g_score + g_map[ny][nx];
       const int32_t f_score = calcFScore(g_score, h_score);
       TraceNode target_node(f_score, g_score, h_score, ny, nx);
 
@@ -445,10 +445,10 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
           maze[ans_y][ans_x] = MazeElement::ANSWER;
           controller_ptr__->enFramequeue(maze);
 
-          solve_cost__ += cost_map[ans_y][ans_x];
+          solve_cost__ += f_map[ans_y][ans_x];
           solve_cell__++;
 
-          const auto [parent_y, parent_x] = parent_map[ans_y][ans_x];
+          const auto [parent_y, parent_x] = come_from[ans_y][ans_x];
           ans_y = parent_y;
           ans_x = parent_x;
         }
@@ -461,14 +461,14 @@ void MazeModel::solveMazeAStar(const MazeAction actions)
         maze[ny][nx] = MazeElement::EXPLORED;
         controller_ptr__->enFramequeue(maze, MazeNode{ ny, nx, MazeElement::EXPLORED });
 
-        cost_map[ny][nx] = target_node.f_score;
-        parent_map[ny][nx] = { current.y, current.x };
+        f_map[ny][nx] = target_node.f_score;
+        come_from[ny][nx] = { current.y, current.x };
         open_list.push(target_node);
       }
       else if (maze[ny][nx] == MazeElement::EXPLORED) {
-        if (cost_map[ny][nx] > target_node.f_score) {
-          cost_map[ny][nx] = target_node.f_score;
-          parent_map[ny][nx] = { current.y, current.x };
+        if (f_map[ny][nx] > target_node.f_score) {
+          f_map[ny][nx] = target_node.f_score;
+          come_from[ny][nx] = { current.y, current.x };
         }
       }
     }
