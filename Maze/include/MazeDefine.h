@@ -46,4 +46,5 @@ struct MazeNode {
   int32_t y, x;
   MazeElement element;
 };
+
 #endif

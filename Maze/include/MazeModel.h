@@ -42,11 +42,6 @@ public:
   std::vector<std::vector<MazeElement>> maze;
 
 private:
-  MazeController *controller_ptr__;
-  int32_t solve_cost__;
-  int32_t solve_cell__;
-
-private:
   void cleanExplored__();
   void initMaze__();
   void resetWallAroundMaze__();
@@ -54,6 +49,11 @@ private:
   bool inWall__(const int32_t y, const int32_t x);
   bool inMaze__(const int32_t y, const int32_t x);
   void setBeginPoint__(MazeNode &node);
+
+private:
+  MazeController *controller_ptr__;
+  int32_t solve_cost__;
+  int32_t solve_cell__;
 };
 
 #endif

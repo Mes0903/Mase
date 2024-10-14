@@ -30,25 +30,27 @@ public:
   void enFramequeue(const std::vector<std::vector<MazeElement>> &maze, const MazeNode &node);
 
 private:
-  MazeRenderer renderer__;
-
-  std::vector<std::vector<MazeElement>> render_maze__;
-  MazeController *controller_ptr__;
-  ThreadSafeQueue<decltype(render_maze__)> maze_queue__;
-  ThreadSafeQueue<MazeNode> update_node_queue__;
-  MazeNode update_node__;
-  bool stop_flag__;
-  bool grid_flag__;
-  bool limit_fps__;
-  uint32_t fps__;
-  uint32_t cell_size__;
-  std::chrono::steady_clock::time_point frame__;
-  std::mutex maze_mutex__;
-
-private:
   void deFramequeue__();
   void renderMaze__();
   void drawGUI__();
+
+private:
+  MazeRenderer renderer__;
+  MazeController *controller_ptr__;
+  std::mutex maze_mutex__;
+
+  std::vector<std::vector<MazeElement>> render_maze__;
+  MazeNode update_node__;
+  ThreadSafeQueue<decltype(render_maze__)> maze_queue__;
+  ThreadSafeQueue<MazeNode> update_node_queue__;
+
+  bool stop_flag__;
+  bool grid_flag__;
+  bool limit_fps__;
+
+  std::chrono::steady_clock::time_point frame__;
+  uint32_t fps__;
+  uint32_t cell_size__;
 };
 
 #endif

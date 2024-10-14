@@ -18,6 +18,8 @@
 #endif
 
 class MazeRenderer {
+  friend class MazeView;
+
 public:
   MazeRenderer();
   ~MazeRenderer();
@@ -32,11 +34,10 @@ private:
   void cleanupGLFW__();
   void cleanupImGui__();
 
+private:
   GLFWwindow *window__;
   ImVec4 clear_color__;
   const char *glsl_version__;
-
-  friend class MazeView;
 };
 
 #endif
