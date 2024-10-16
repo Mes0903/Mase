@@ -10,7 +10,6 @@ AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortEnumsOnASingleLine: true
-AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLambdasOnASingleLine: true
@@ -20,7 +19,6 @@ BreakAfterAttributes: Always
 BreakBeforeBraces: Custom
 ColumnLimit: 0
 ContinuationIndentWidth: 2
-Cpp11BracedListStyle: false
 Cpp11BracedListStyle: false
 DerivePointerAlignment: false
 IndentGotoLabels: true
